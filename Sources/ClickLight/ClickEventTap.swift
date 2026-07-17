@@ -24,6 +24,10 @@ final class ClickEventTap: ClickEventCapturing {
         }
     }
 
+    var usesEventTap: Bool {
+        eventTap != nil
+    }
+
     func start(
         laserPointerEnabled: Bool,
         liveKeyboardShortcutsEnabled: Bool,
