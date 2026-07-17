@@ -51,7 +51,7 @@ ClickEventTap (CGEventTap + NSEvent fallback)
 
 ## Important Pitfalls
 
-- **Accessibility permission** is required for `CGEventTap`. After granting it in System Settings, the user must quit and reopen the app. Moving the `.app` bundle to a new path also requires re-granting.
+- **Accessibility permission** is required for `CGEventTap`. After granting it in System Settings, return to ClickLight (for example, open its Settings window) to retry capture without quitting. Newly granted Input Monitoring access also restarts listeners when needed. Moving the `.app` bundle to a new path also requires re-granting.
 - **CoreGraphics drawing only** — `ClickOverlayView` uses raw `CGContext`; do not introduce `NSBezierPath` or layer-backed drawing.
 - **Laser pointer is CPU-intensive** — enabling it adds `mouseMoved` to the event filter; be careful adding more processing inside the move handler.
 - **Screen IDs are not stable across reboots** — `OverlayCoordinator` uses `NSScreenNumber` from `deviceDescription`, sufficient for runtime but not for persistence.

@@ -78,7 +78,7 @@ ClickLight requires Accessibility permission to detect clicks outside its own me
 
 The optional Live Keyboard Shortcuts display and screenshot shortcut handling additionally require **Input Monitoring**, because macOS protects keyboard input separately from mouse clicks.
 
-After enabling Accessibility permission, quit ClickLight from the menu bar and reopen it. Input Monitoring changes are picked up when you return to ClickLight.
+After enabling Accessibility or Input Monitoring permission, return to ClickLight (for example, open Settings from its menu bar). Capture refreshes automatically without restarting the app.
 
 Tip: for recorded demos or presentations, pair ClickLight with a larger macOS pointer in **System Settings -> Accessibility -> Display -> Pointer**.
 

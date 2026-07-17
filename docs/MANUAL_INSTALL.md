@@ -26,7 +26,7 @@ After launching ClickLight, open:
 System Settings -> Privacy & Security -> Accessibility
 ```
 
-Enable `ClickLight`, then quit ClickLight from the menu bar and reopen it.
+Enable `ClickLight`, then return to the app by opening Settings from its menu bar. Click capture retries automatically without restarting ClickLight.
 
 ## Verify
 
