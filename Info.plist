@@ -26,21 +26,9 @@
     <string>14.0</string>
     <key>LSUIElement</key>
     <true/>
-    <key>NSAppleEventsUsageDescription</key>
-    <string>ClickLight uses system event access to show click highlights during live demos.</string>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright (c) 2026 Aurora Scharff.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
-    <key>SUAutomaticallyUpdate</key>
-    <true/>
-    <key>SUEnableAutomaticChecks</key>
-    <true/>
-    <key>SUEnableInstallerLauncherService</key>
-    <true/>
-    <key>SUFeedURL</key>
-    <string>https://raw.githubusercontent.com/aurorascharff/ClickLight/main/appcast.xml</string>
-    <key>SUPublicEDKey</key>
-    <string>d3Y5WA/uzn6oN6dVgcEYoTLPRytA+odL02taIR86yr4=</string>
 </dict>
 </plist>
