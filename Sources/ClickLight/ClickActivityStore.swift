@@ -82,14 +82,17 @@ final class ClickActivityStore: ObservableObject {
     func label(for day: ClickActivityDay) -> String {
         guard let date = date(from: day.id) else { return day.id }
         if calendar.isDateInToday(date) {
-            return "Today"
+            return L10n.t("Today", "今天")
         }
         return date.formatted(.dateTime.weekday(.abbreviated))
     }
 
     func accessibilityLabel(for day: ClickActivityDay) -> String {
         let dateLabel = date(from: day.id)?.formatted(date: .complete, time: .omitted) ?? day.id
-        return "\(dateLabel), \(day.totalClicks) clicks"
+        return L10n.t(
+            "\(dateLabel), \(day.totalClicks) clicks",
+            "\(dateLabel)，\(day.totalClicks) 次点击"
+        )
     }
 
     private func add(_ update: (inout ClickActivityDay) -> Void) {

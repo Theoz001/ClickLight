@@ -1,6 +1,7 @@
 import AppKit
 
 struct ClickSettings: Equatable {
+    var language: AppLanguage
     var isEnabled: Bool
     var showPress: Bool
     var showRelease: Bool
@@ -21,6 +22,7 @@ struct ClickSettings: Equatable {
     var size: CGFloat
     var intensity: CGFloat
     var duration: TimeInterval
+    var pulseStyle: ClickPulseStyle
     var colorPreset: ClickColorPreset
     var customColorMode: CustomClickColorMode
     var customColorRed: CGFloat
@@ -127,6 +129,7 @@ struct ClickSettings: Equatable {
     }
 
     static let defaults = ClickSettings(
+        language: .system,
         isEnabled: true,
         showPress: true,
         showRelease: true,
@@ -147,6 +150,7 @@ struct ClickSettings: Equatable {
         size: 64,
         intensity: 0.7,
         duration: 0.48,
+        pulseStyle: .classic,
         colorPreset: .default,
         customColorMode: .all,
         customColorRed: 0.0,
@@ -289,6 +293,29 @@ struct ClickSettings: Equatable {
     }
 }
 
+enum ClickPulseStyle: String, CaseIterable, Codable, Equatable {
+    case classic
+    case ripple
+    case particles
+    case shockwave
+    case spark
+
+    var title: String {
+        switch self {
+        case .classic:
+            return L10n.t("Classic", "经典")
+        case .ripple:
+            return L10n.t("Ripple", "涟漪")
+        case .particles:
+            return L10n.t("Particles", "粒子")
+        case .shockwave:
+            return L10n.t("Shockwave", "冲击波")
+        case .spark:
+            return L10n.t("Spark", "火花")
+        }
+    }
+}
+
 enum CustomClickColorMode: String, CaseIterable, Codable, Equatable {
     case all
     case byClick
@@ -296,9 +323,9 @@ enum CustomClickColorMode: String, CaseIterable, Codable, Equatable {
     var title: String {
         switch self {
         case .all:
-            return "One Color"
+            return L10n.t("One Color", "单一颜色")
         case .byClick:
-            return "By Click"
+            return L10n.t("By Click", "按点击区分")
         }
     }
 }
@@ -310,9 +337,9 @@ enum LiveShortcutPosition: String, CaseIterable, Codable, Equatable {
     var title: String {
         switch self {
         case .nearPointer:
-            return "Near Pointer"
+            return L10n.t("Near Pointer", "指针附近")
         case .bottomCenter:
-            return "Bottom Center"
+            return L10n.t("Bottom Center", "底部居中")
         }
     }
 }
@@ -326,13 +353,13 @@ enum LiveShortcutSize: String, CaseIterable, Codable, Equatable {
     var title: String {
         switch self {
         case .small:
-            return "Small"
+            return L10n.t("Small", "小")
         case .medium:
-            return "Medium"
+            return L10n.t("Medium", "中")
         case .large:
-            return "Large"
+            return L10n.t("Large", "大")
         case .extraLarge:
-            return "XL"
+            return L10n.t("XL", "特大")
         }
     }
 
@@ -397,23 +424,23 @@ enum ClickColorPreset: String, CaseIterable, Codable, Equatable {
     var title: String {
         switch self {
         case .default:
-            return "Default"
+            return L10n.t("Default", "默认")
         case .primary:
-            return "Primary"
+            return L10n.t("Primary", "强调色")
         case .custom:
-            return "Custom"
+            return L10n.t("Custom", "自定义")
         case .blue:
-            return "Blue"
+            return L10n.t("Blue", "蓝色")
         case .green:
-            return "Green"
+            return L10n.t("Green", "绿色")
         case .purple:
-            return "Purple"
+            return L10n.t("Purple", "紫色")
         case .pink:
-            return "Pink"
+            return L10n.t("Pink", "粉色")
         case .orange:
-            return "Orange"
+            return L10n.t("Orange", "橙色")
         case .white:
-            return "White"
+            return L10n.t("White", "白色")
         }
     }
 
@@ -446,6 +473,7 @@ final class SettingsStore {
     static let didChangeNotification = Notification.Name("ClickLightSettingsDidChange")
 
     private enum Key {
+        static let language = "language"
         static let isEnabled = "isEnabled"
         static let showPress = "showPress"
         static let showRelease = "showRelease"
@@ -461,6 +489,7 @@ final class SettingsStore {
         static let size = "size"
         static let intensity = "intensity"
         static let duration = "duration"
+        static let pulseStyle = "pulseStyle"
         static let colorPreset = "colorPreset"
         static let customColorMode = "customColorMode"
         static let customColorRed = "customColorRed"
@@ -528,6 +557,7 @@ final class SettingsStore {
     var settings: ClickSettings {
         get {
             ClickSettings(
+                language: AppLanguage(rawValue: defaults.string(forKey: Key.language) ?? "") ?? .system,
                 isEnabled: defaults.bool(forKey: Key.isEnabled),
                 showPress: defaults.bool(forKey: Key.showPress),
                 showRelease: defaults.bool(forKey: Key.showRelease),
@@ -548,6 +578,7 @@ final class SettingsStore {
                 size: CGFloat(defaults.double(forKey: Key.size)),
                 intensity: CGFloat(defaults.double(forKey: Key.intensity)),
                 duration: defaults.double(forKey: Key.duration),
+                pulseStyle: ClickPulseStyle(rawValue: defaults.string(forKey: Key.pulseStyle) ?? "") ?? .classic,
                 colorPreset: ClickColorPreset(rawValue: defaults.string(forKey: Key.colorPreset) ?? "") ?? .default,
                 customColorMode: CustomClickColorMode(rawValue: defaults.string(forKey: Key.customColorMode) ?? "") ?? .all,
                 customColorRed: CGFloat(defaults.double(forKey: Key.customColorRed)).sanitizedColorComponent,
@@ -619,6 +650,7 @@ final class SettingsStore {
             )
         }
         set {
+            defaults.set(newValue.language.rawValue, forKey: Key.language)
             defaults.set(newValue.isEnabled, forKey: Key.isEnabled)
             defaults.set(newValue.showPress, forKey: Key.showPress)
             defaults.set(newValue.showRelease, forKey: Key.showRelease)
@@ -639,6 +671,7 @@ final class SettingsStore {
             defaults.set(Double(newValue.size), forKey: Key.size)
             defaults.set(Double(newValue.intensity), forKey: Key.intensity)
             defaults.set(newValue.duration, forKey: Key.duration)
+            defaults.set(newValue.pulseStyle.rawValue, forKey: Key.pulseStyle)
             defaults.set(newValue.colorPreset.rawValue, forKey: Key.colorPreset)
             defaults.set(newValue.customColorMode.rawValue, forKey: Key.customColorMode)
             defaults.set(Double(newValue.customColorRed), forKey: Key.customColorRed)
@@ -699,6 +732,7 @@ final class SettingsStore {
     private func registerDefaults() {
         let defaults = ClickSettings.defaults
         self.defaults.register(defaults: [
+            Key.language: defaults.language.rawValue,
             Key.isEnabled: defaults.isEnabled,
             Key.showPress: defaults.showPress,
             Key.showRelease: defaults.showRelease,
@@ -719,6 +753,7 @@ final class SettingsStore {
             Key.size: Double(defaults.size),
             Key.intensity: Double(defaults.intensity),
             Key.duration: defaults.duration,
+            Key.pulseStyle: defaults.pulseStyle.rawValue,
             Key.colorPreset: defaults.colorPreset.rawValue,
             Key.customColorMode: defaults.customColorMode.rawValue,
             Key.customColorRed: Double(defaults.customColorRed),

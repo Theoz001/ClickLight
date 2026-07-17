@@ -39,7 +39,10 @@ final class HotKeyManager {
             guard let binding = shortcuts[action] else { continue }
 
             if let existingAction = seenBindings[binding] {
-                let message = "Matches \(existingAction.title). Choose a unique shortcut."
+                let message = L10n.t(
+                    "Matches \(existingAction.title). Choose a unique shortcut.",
+                    "与「\(existingAction.title)」冲突。请使用不同的快捷键。"
+                )
                 issues[action] = message
                 NSLog("ClickLight: Duplicate shortcut for \(action.rawValue) was ignored.")
                 continue
@@ -47,7 +50,10 @@ final class HotKeyManager {
 
             seenBindings[binding] = action
             if let status = register(action: action, binding: binding) {
-                issues[action] = "Could not register globally (status \(status))."
+                issues[action] = L10n.t(
+                    "Could not register globally (status \(status)).",
+                    "无法全局注册（错误码 \(status)）。"
+                )
             }
         }
 

@@ -173,23 +173,23 @@ enum ClickShortcutAction: String, CaseIterable, Identifiable, Sendable {
     var title: String {
         switch self {
         case .toggleEnabled:
-            return "Toggle ClickLight"
+            return L10n.t("Toggle ClickLight", "开关 ClickLight")
         case .toggleLaserPointer:
-            return "Toggle Laser Pointer"
+            return L10n.t("Toggle Laser Pointer", "开关激光指针")
         case .toggleShowPress:
-            return "Toggle Press"
+            return L10n.t("Toggle Press", "开关按下高亮")
         case .toggleShowRelease:
-            return "Toggle Release"
+            return L10n.t("Toggle Release", "开关松开高亮")
         case .toggleShowRightClick:
-            return "Toggle Right Click"
+            return L10n.t("Toggle Right Click", "开关右键高亮")
         case .toggleShowMiddleClick:
-            return "Toggle Middle Click"
+            return L10n.t("Toggle Middle Click", "开关中键高亮")
         case .toggleShowDrag:
-            return "Toggle Drag"
+            return L10n.t("Toggle Drag", "开关拖拽高亮")
         case .randomizeColors:
-            return "Randomize Colors"
+            return L10n.t("Randomize Colors", "随机颜色")
         case .toggleLiveKeyboardShortcuts:
-            return "Toggle Live Keyboard Shortcuts"
+            return L10n.t("Toggle Live Keyboard Shortcuts", "开关实时快捷键显示")
         }
     }
 

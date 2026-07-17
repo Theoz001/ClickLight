@@ -32,23 +32,23 @@ struct ClickLightSettingsView: View {
                 Divider()
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Label("Preview Pad", systemImage: "cursorarrow.click.2")
+                    Label(L10n.t("Preview Pad", "预览区"), systemImage: "cursorarrow.click.2")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
 
-                    ClickPreviewPad(settings: viewModel.settings, activityStore: activityStore)
+                    ClickPreviewPad(settings: viewModel.settings)
                         .frame(height: 116)
-                        .accessibilityLabel("Preview Pad")
+                        .accessibilityLabel(L10n.t("Preview Pad", "预览区"))
 
                     Button {
                         viewModel.randomizeStyle()
                     } label: {
-                        Label("Randomize", systemImage: "die.face.5.fill")
+                        Label(L10n.t("Randomize", "随机"), systemImage: "die.face.5.fill")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-                    .accessibilityHint("Choose random visual presets")
+                    .accessibilityHint(L10n.t("Choose random visual presets", "随机选择视觉预设"))
                 }
                 .padding(12)
             }
@@ -129,7 +129,7 @@ struct ClickLightSettingsView: View {
                 supportsOpacity: false
             )
             .labelsHidden()
-            .accessibilityLabel("Laser Pointer \(title) Color")
+            .accessibilityLabel(L10n.t("Laser Pointer ", "激光指针") + title + L10n.t(" Color", "颜色"))
         }
     }
 
@@ -152,26 +152,38 @@ struct ClickLightSettingsView: View {
     private var generalPane: some View {
         VStack(spacing: 16) {
             SettingsCard {
-                ModernRow(title: "Enable ClickLight",
-                          subtitle: "Show pulse highlights on every click.") {
+                ModernRow(title: L10n.t("Enable ClickLight", "启用 ClickLight"),
+                          subtitle: L10n.t("Show pulse highlights on every click.", "在每次点击时显示脉冲高亮。")) {
                     Toggle("", isOn: binding(\.isEnabled))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Enable ClickLight")
+                        .accessibilityLabel(L10n.t("Enable ClickLight", "启用 ClickLight"))
                 }
+            }
+
+            SettingsCard(title: L10n.t("Language", "语言"),
+                         subtitle: L10n.t("Choose the display language for ClickLight.", "选择 ClickLight 的显示语言。")) {
+                Picker(L10n.t("Language", "语言"), selection: binding(\.language)) {
+                    ForEach(AppLanguage.allCases, id: \.rawValue) { language in
+                        Text(language.title).tag(language)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .accessibilityLabel(L10n.t("Language", "语言"))
             }
 
             SettingsCard {
                 VStack(alignment: .leading, spacing: 8) {
-                    ModernRow(title: "Launch at Login",
-                              subtitle: "Open ClickLight automatically after signing in.") {
+                    ModernRow(title: L10n.t("Launch at Login", "登录时启动"),
+                              subtitle: L10n.t("Open ClickLight automatically after signing in.", "登录后自动打开 ClickLight。")) {
                         Toggle("", isOn: Binding(
                             get: { viewModel.launchAtLoginEnabled },
                             set: { viewModel.setLaunchAtLogin($0) }
                         ))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Launch at Login")
+                        .accessibilityLabel(L10n.t("Launch at Login", "登录时启动"))
                     }
                     if let message = viewModel.launchAtLoginErrorMessage {
                         Label(message, systemImage: "exclamationmark.triangle.fill")
@@ -183,20 +195,20 @@ struct ClickLightSettingsView: View {
 
             SettingsCard {
                 VStack(spacing: 0) {
-                    ModernRow(title: "Show Menu Bar Text",
-                              subtitle: "Display the ClickLight name next to the menu bar icon.") {
+                    ModernRow(title: L10n.t("Show Menu Bar Text", "显示菜单栏文字"),
+                              subtitle: L10n.t("Display the ClickLight name next to the menu bar icon.", "在菜单栏图标旁显示 ClickLight 名称。")) {
                         Toggle("", isOn: binding(\.showMenuBarText))
                             .toggleStyle(.switch)
                             .labelsHidden()
-                            .accessibilityLabel("Show Menu Bar Text")
+                            .accessibilityLabel(L10n.t("Show Menu Bar Text", "显示菜单栏文字"))
                     }
                     Divider().padding(.vertical, 6)
-                    ModernRow(title: "Show Click Count in Menu Bar",
-                              subtitle: "Display today's click total beside the menu bar icon.") {
+                    ModernRow(title: L10n.t("Show Click Count in Menu Bar", "在菜单栏显示点击次数"),
+                              subtitle: L10n.t("Display today's click total beside the menu bar icon.", "在菜单栏图标旁显示今日点击总数。")) {
                         Toggle("", isOn: binding(\.showMenuBarClickCount))
                             .toggleStyle(.switch)
                             .labelsHidden()
-                            .accessibilityLabel("Show Click Count in Menu Bar")
+                            .accessibilityLabel(L10n.t("Show Click Count in Menu Bar", "在菜单栏显示点击次数"))
                     }
                 }
             }
@@ -209,11 +221,13 @@ struct ClickLightSettingsView: View {
                             .foregroundStyle(viewModel.accessibilityTrusted ? .green : .orange)
                             .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(viewModel.accessibilityTrusted ? "Accessibility Granted" : "Accessibility Required")
+                            Text(viewModel.accessibilityTrusted
+                                 ? L10n.t("Accessibility Granted", "已授予辅助功能权限")
+                                 : L10n.t("Accessibility Required", "需要辅助功能权限"))
                                 .font(.callout.weight(.medium))
                             Text(viewModel.accessibilityTrusted
-                                 ? "ClickLight can observe clicks across the system."
-                                 : "Grant Accessibility access so ClickLight can see your clicks.")
+                                 ? L10n.t("ClickLight can observe clicks across the system.", "ClickLight 可以观察全系统的点击。")
+                                 : L10n.t("Grant Accessibility access so ClickLight can see your clicks.", "授予辅助功能权限，以便 ClickLight 检测你的点击。"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -225,7 +239,9 @@ struct ClickLightSettingsView: View {
                         Button {
                             viewModel.openAccessibilitySettings()
                         } label: {
-                            Label(viewModel.accessibilityTrusted ? "Open Accessibility Settings" : "Grant Access…",
+                            Label(viewModel.accessibilityTrusted
+                                  ? L10n.t("Open Accessibility Settings", "打开辅助功能设置")
+                                  : L10n.t("Grant Access…", "授予权限…"),
                                   systemImage: "arrow.up.right.square")
                         }
                         .controlSize(.regular)
@@ -242,11 +258,13 @@ struct ClickLightSettingsView: View {
                                 .foregroundStyle(viewModel.inputMonitoringTrusted ? .green : .orange)
                                 .accessibilityHidden(true)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(viewModel.inputMonitoringTrusted ? "Input Monitoring Granted" : "Input Monitoring Required")
+                                Text(viewModel.inputMonitoringTrusted
+                                     ? L10n.t("Input Monitoring Granted", "已授予输入监控权限")
+                                     : L10n.t("Input Monitoring Required", "需要输入监控权限"))
                                     .font(.callout.weight(.medium))
                                 Text(viewModel.inputMonitoringTrusted
-                                     ? "ClickLight can observe keyboard shortcuts across the system."
-                                     : "Grant Input Monitoring access so ClickLight can show keyboard shortcuts.")
+                                     ? L10n.t("ClickLight can observe keyboard shortcuts across the system.", "ClickLight 可以观察全系统的键盘快捷键。")
+                                     : L10n.t("Grant Input Monitoring access so ClickLight can show keyboard shortcuts.", "授予输入监控权限，以便 ClickLight 显示键盘快捷键。"))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -258,7 +276,9 @@ struct ClickLightSettingsView: View {
                             Button {
                                 viewModel.openInputMonitoringSettings()
                             } label: {
-                                Label(viewModel.inputMonitoringTrusted ? "Open Input Monitoring Settings" : "Grant Access...",
+                                Label(viewModel.inputMonitoringTrusted
+                                      ? L10n.t("Open Input Monitoring Settings", "打开输入监控设置")
+                                      : L10n.t("Grant Access...", "授予权限…"),
                                       systemImage: "arrow.up.right.square")
                             }
                             .controlSize(.regular)
@@ -268,12 +288,12 @@ struct ClickLightSettingsView: View {
             }
 
             SettingsCard {
-                ModernRow(title: "Reset to Defaults",
-                          subtitle: "Restore size, intensity, duration, color, and toggles.") {
+                ModernRow(title: L10n.t("Reset to Defaults", "恢复默认设置"),
+                          subtitle: L10n.t("Restore size, intensity, duration, color, and toggles.", "还原大小、强度、时长、颜色和开关。")) {
                     Button(role: .destructive) {
                         showResetConfirmation = true
                     } label: {
-                        Label("Reset", systemImage: "arrow.counterclockwise")
+                        Label(L10n.t("Reset", "还原"), systemImage: "arrow.counterclockwise")
                     }
                     .controlSize(.regular)
                 }
@@ -281,25 +301,36 @@ struct ClickLightSettingsView: View {
 
         }
         .confirmationDialog(
-            "Reset all ClickLight settings?",
+            L10n.t("Reset all ClickLight settings?", "还原所有 ClickLight 设置？"),
             isPresented: $showResetConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Reset", role: .destructive) {
+            Button(L10n.t("Reset", "还原"), role: .destructive) {
                 viewModel.resetToDefaults()
             }
-            Button("Cancel", role: .cancel) {}
+            Button(L10n.t("Cancel", "取消"), role: .cancel) {}
         } message: {
-            Text("This restores size, intensity, duration, color, and visibility toggles to their defaults.")
+            Text(L10n.t("This restores size, intensity, duration, color, and visibility toggles to their defaults.", "这会将大小、强度、时长、颜色和可见性开关还原为默认值。"))
         }
     }
 
     private var stylePane: some View {
         VStack(spacing: 16) {
-            SettingsCard(title: "Size", subtitle: "How large the click pulse appears.") {
+            SettingsCard(title: L10n.t("Pulse Style", "脉冲样式"), subtitle: L10n.t("The effect drawn at each click. Try it in the Preview Pad.", "每次点击绘制的效果。可在预览区中试用。")) {
+                Picker(L10n.t("Pulse Style", "脉冲样式"), selection: binding(\.pulseStyle)) {
+                    ForEach(ClickPulseStyle.allCases, id: \.rawValue) { style in
+                        Text(style.title).tag(style)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .accessibilityLabel(L10n.t("Pulse Style", "脉冲样式"))
+            }
+
+            SettingsCard(title: L10n.t("Size", "大小"), subtitle: L10n.t("How large the click pulse appears.", "点击脉冲的显示大小。")) {
                 VStack(alignment: .leading, spacing: 16) {
                     presetSegmented(
-                        label: "Size Preset",
+                        label: L10n.t("Size Preset", "大小预设"),
                         selection: Binding(
                             get: { viewModel.sizePresetSelection },
                             set: { viewModel.applySizePresetSelection($0) }
@@ -308,7 +339,7 @@ struct ClickLightSettingsView: View {
                     )
 
                     modernSlider(
-                        label: "Size",
+                        label: L10n.t("Size", "大小"),
                         value: Binding(
                             get: { Double(viewModel.settings.size) },
                             set: { newValue in
@@ -323,10 +354,10 @@ struct ClickLightSettingsView: View {
                 }
             }
 
-            SettingsCard(title: "Intensity", subtitle: "How bright the click pulse glows.") {
+            SettingsCard(title: L10n.t("Intensity", "强度"), subtitle: L10n.t("How bright the click pulse glows.", "点击脉冲的亮度。")) {
                 VStack(alignment: .leading, spacing: 16) {
                     presetSegmented(
-                        label: "Intensity Preset",
+                        label: L10n.t("Intensity Preset", "强度预设"),
                         selection: Binding(
                             get: { viewModel.intensityPresetSelection },
                             set: { viewModel.applyIntensityPresetSelection($0) }
@@ -335,7 +366,7 @@ struct ClickLightSettingsView: View {
                     )
 
                     modernSlider(
-                        label: "Intensity",
+                        label: L10n.t("Intensity", "强度"),
                         value: Binding(
                             get: { Double(viewModel.settings.intensity) },
                             set: { newValue in
@@ -343,17 +374,17 @@ struct ClickLightSettingsView: View {
                             }
                         ),
                         range: 0.05...2.0,
-                        lower: "Subtle",
-                        upper: "Beacon",
+                        lower: L10n.t("Subtle", "微弱"),
+                        upper: L10n.t("Beacon", "耀眼"),
                         readout: String(format: "%.2f", Double(viewModel.settings.intensity))
                     )
                 }
             }
 
-            SettingsCard(title: "Duration", subtitle: "How long each pulse stays visible.") {
+            SettingsCard(title: L10n.t("Duration", "时长"), subtitle: L10n.t("How long each pulse stays visible.", "每次脉冲持续显示的时间。")) {
                 VStack(alignment: .leading, spacing: 16) {
                     presetSegmented(
-                        label: "Duration Preset",
+                        label: L10n.t("Duration Preset", "时长预设"),
                         selection: Binding(
                             get: { viewModel.durationPresetSelection },
                             set: { viewModel.applyDurationPresetSelection($0) }
@@ -362,7 +393,7 @@ struct ClickLightSettingsView: View {
                     )
 
                     modernSlider(
-                        label: "Duration",
+                        label: L10n.t("Duration", "时长"),
                         value: Binding(
                             get: { viewModel.settings.duration },
                             set: { newValue in
@@ -377,12 +408,12 @@ struct ClickLightSettingsView: View {
                 }
             }
 
-            SettingsCard(title: "Color", subtitle: "Tint applied to every pulse.") {
+            SettingsCard(title: L10n.t("Color", "颜色"), subtitle: L10n.t("Tint applied to every pulse.", "应用于每次脉冲的色彩。")) {
                 VStack(alignment: .leading, spacing: 14) {
                     HStack(spacing: 10) {
                         ColorSwatch(color: resolvedColor)
                             .accessibilityHidden(true)
-                        Picker("Color", selection: binding(\.colorPreset)) {
+                        Picker(L10n.t("Color", "颜色"), selection: binding(\.colorPreset)) {
                             ForEach(ClickColorPreset.allCases, id: \.rawValue) { preset in
                                 Text(preset.title).tag(preset)
                             }
@@ -394,19 +425,19 @@ struct ClickLightSettingsView: View {
                     if viewModel.settings.colorPreset == .custom {
                         Divider()
 
-                        Picker("Custom Color Mode", selection: binding(\.customColorMode)) {
+                        Picker(L10n.t("Custom Color Mode", "自定义颜色模式"), selection: binding(\.customColorMode)) {
                             ForEach(CustomClickColorMode.allCases, id: \.rawValue) { mode in
                                 Text(mode.title).tag(mode)
                             }
                         }
                         .labelsHidden()
                         .pickerStyle(.segmented)
-                        .accessibilityLabel("Custom Color Mode")
+                        .accessibilityLabel(L10n.t("Custom Color Mode", "自定义颜色模式"))
 
                         if viewModel.settings.customColorMode == .all {
                             customColorRow(
-                                title: "Custom Color",
-                                subtitle: "Use one custom color for every click.",
+                                title: L10n.t("Custom Color", "自定义颜色"),
+                                subtitle: L10n.t("Use one custom color for every click.", "所有点击使用同一种自定义颜色。"),
                                 color: Binding(
                                     get: { Color(nsColor: viewModel.settings.customColor) },
                                     set: { viewModel.applyCustomColor(NSColor($0)) }
@@ -415,26 +446,26 @@ struct ClickLightSettingsView: View {
                         } else {
                             VStack(spacing: 0) {
                                 customColorRow(
-                                    title: "Left Click",
-                                    subtitle: "Used for left press and release pulses.",
+                                    title: L10n.t("Left Click", "左键点击"),
+                                    subtitle: L10n.t("Used for left press and release pulses.", "用于左键按下和松开的脉冲。"),
                                     color: customClickColorBinding(.left)
                                 )
                                 Divider().padding(.vertical, 6)
                                 customColorRow(
-                                    title: "Right Click",
-                                    subtitle: "Used for secondary-button pulses.",
+                                    title: L10n.t("Right Click", "右键点击"),
+                                    subtitle: L10n.t("Used for secondary-button pulses.", "用于次要键的脉冲。"),
                                     color: customClickColorBinding(.right)
                                 )
                                 Divider().padding(.vertical, 6)
                                 customColorRow(
-                                    title: "Middle Click",
-                                    subtitle: "Used for center-button pulses.",
+                                    title: L10n.t("Middle Click", "中键点击"),
+                                    subtitle: L10n.t("Used for center-button pulses.", "用于中间键的脉冲。"),
                                     color: customClickColorBinding(.middle)
                                 )
                                 Divider().padding(.vertical, 6)
                                 customColorRow(
-                                    title: "Drag",
-                                    subtitle: "Used for the normal drag trail.",
+                                    title: L10n.t("Drag", "拖拽"),
+                                    subtitle: L10n.t("Used for the normal drag trail.", "用于普通拖拽轨迹。"),
                                     color: customClickColorBinding(.drag)
                                 )
                             }
@@ -442,8 +473,8 @@ struct ClickLightSettingsView: View {
                     } else {
                         Divider()
 
-                        ModernRow(title: "Custom Color",
-                                  subtitle: "Picking a color switches to Custom automatically.") {
+                        ModernRow(title: L10n.t("Custom Color", "自定义颜色"),
+                                  subtitle: L10n.t("Picking a color switches to Custom automatically.", "选取颜色后自动切换为自定义。")) {
                             ColorPicker(
                                 "",
                                 selection: Binding(
@@ -453,24 +484,24 @@ struct ClickLightSettingsView: View {
                                 supportsOpacity: false
                             )
                             .labelsHidden()
-                            .accessibilityLabel("Custom Color Picker")
+                            .accessibilityLabel(L10n.t("Custom Color Picker", "自定义颜色选择器"))
                         }
                     }
 
                     Divider()
 
-                    ModernRow(title: "Laser Pointer Color",
-                              subtitle: "Outer ring and inner fill. The middle color is blended automatically.") {
+                    ModernRow(title: L10n.t("Laser Pointer Color", "激光指针颜色"),
+                              subtitle: L10n.t("Outer ring and inner fill. The middle color is blended automatically.", "外圈与内圈填充。中间颜色自动混合。")) {
                         HStack(spacing: 12) {
                             laserColorPicker(
-                                title: "Outer",
+                                title: L10n.t("Outer", "外圈"),
                                 color: Binding(
                                     get: { Color(nsColor: viewModel.settings.laserColor) },
                                     set: { viewModel.applyLaserColor(NSColor($0)) }
                                 )
                             )
                             laserColorPicker(
-                                title: "Inner",
+                                title: L10n.t("Inner", "内圈"),
                                 color: Binding(
                                     get: { Color(nsColor: viewModel.settings.laserInnerColor) },
                                     set: { viewModel.applyLaserInnerColor(NSColor($0)) }
@@ -486,31 +517,31 @@ struct ClickLightSettingsView: View {
     private var eventsPane: some View {
         SettingsCard {
             VStack(spacing: 0) {
-                ModernRow(title: "Laser Pointer Mode",
-                          subtitle: "Show a fading pointer and draw temporary strokes while dragging.") {
+                ModernRow(title: L10n.t("Laser Pointer Mode", "激光指针模式"),
+                          subtitle: L10n.t("Show a fading pointer and draw temporary strokes while dragging.", "显示渐隐的指针，并在拖拽时绘制临时笔迹。")) {
                     Toggle("", isOn: binding(\.showLaserPointer))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Laser Pointer Mode")
+                        .accessibilityLabel(L10n.t("Laser Pointer Mode", "激光指针模式"))
                 }
                 Divider().padding(.vertical, 6)
-                ModernRow(title: "Show Live Keyboard Shortcuts",
-                          subtitle: "Display shortcut combinations while you use them.") {
+                ModernRow(title: L10n.t("Show Live Keyboard Shortcuts", "显示实时键盘快捷键"),
+                          subtitle: L10n.t("Display shortcut combinations while you use them.", "在使用快捷键时实时显示按键组合。")) {
                     Toggle("", isOn: binding(\.showLiveKeyboardShortcuts))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Live Keyboard Shortcuts")
+                        .accessibilityLabel(L10n.t("Show Live Keyboard Shortcuts", "显示实时键盘快捷键"))
                 }
                 if viewModel.settings.showLiveKeyboardShortcuts {
                     Divider().padding(.vertical, 6)
                     VStack(alignment: .leading, spacing: 14) {
                         shortcutDisplayPicker(
-                            title: "Position",
+                            title: L10n.t("Position", "位置"),
                             selection: binding(\.liveShortcutPosition),
                             options: LiveShortcutPosition.allCases
                         )
                         shortcutDisplayPicker(
-                            title: "Size",
+                            title: L10n.t("Size", "大小"),
                             selection: binding(\.liveShortcutSize),
                             options: LiveShortcutSize.allCases
                         )
@@ -518,46 +549,46 @@ struct ClickLightSettingsView: View {
                     .padding(.vertical, 6)
                 }
                 Divider().padding(.vertical, 6)
-                ModernRow(title: "Show Press",
-                          subtitle: "Highlight when the mouse button goes down.") {
+                ModernRow(title: L10n.t("Show Press", "显示按下"),
+                          subtitle: L10n.t("Highlight when the mouse button goes down.", "鼠标按键按下时高亮。")) {
                     Toggle("", isOn: binding(\.showPress))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Press")
+                        .accessibilityLabel(L10n.t("Show Press", "显示按下"))
                 }
                 Divider().padding(.vertical, 6)
-                ModernRow(title: "Show Release",
-                          subtitle: "Highlight when the mouse button releases.") {
+                ModernRow(title: L10n.t("Show Release", "显示松开"),
+                          subtitle: L10n.t("Highlight when the mouse button releases.", "鼠标按键松开时高亮。")) {
                     Toggle("", isOn: binding(\.showRelease))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Release")
+                        .accessibilityLabel(L10n.t("Show Release", "显示松开"))
                 }
                 Divider().padding(.vertical, 6)
-                ModernRow(title: "Show Right Click",
-                          subtitle: "Highlight secondary-button clicks.") {
+                ModernRow(title: L10n.t("Show Right Click", "显示右键点击"),
+                          subtitle: L10n.t("Highlight secondary-button clicks.", "高亮次要键点击。")) {
                     Toggle("", isOn: binding(\.showRightClick))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Right Click")
+                        .accessibilityLabel(L10n.t("Show Right Click", "显示右键点击"))
                 }
                 Divider().padding(.vertical, 6)
-                    ModernRow(title: "Show Middle Click",
-                          subtitle: "Highlight center-button clicks.") {
+                    ModernRow(title: L10n.t("Show Middle Click", "显示中键点击"),
+                          subtitle: L10n.t("Highlight center-button clicks.", "高亮中间键点击。")) {
                       Toggle("", isOn: binding(\.showMiddleClick))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Middle Click")
+                        .accessibilityLabel(L10n.t("Show Middle Click", "显示中键点击"))
                     }
                     Divider().padding(.vertical, 6)
-                ModernRow(title: "Show Drag",
+                ModernRow(title: L10n.t("Show Drag", "显示拖拽"),
                           subtitle: viewModel.settings.showLaserPointer
-                              ? "Laser Pointer Mode replaces the normal drag trail."
-                              : "Trail pointer movement while dragging.") {
+                              ? L10n.t("Laser Pointer Mode replaces the normal drag trail.", "激光指针模式会替代普通拖拽轨迹。")
+                              : L10n.t("Trail pointer movement while dragging.", "拖拽时显示指针轨迹。")) {
                     Toggle("", isOn: binding(\.showDrag))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Drag")
+                        .accessibilityLabel(L10n.t("Show Drag", "显示拖拽"))
                         .disabled(viewModel.settings.showLaserPointer)
                 }
             }
@@ -569,7 +600,7 @@ struct ClickLightSettingsView: View {
             if viewModel.hasHotKeyRegistrationIssues {
                 SettingsCard {
                     VStack(alignment: .leading, spacing: 6) {
-                        Label("Some shortcuts could not be registered globally.", systemImage: "exclamationmark.triangle.fill")
+                        Label(L10n.t("Some shortcuts could not be registered globally.", "部分快捷键无法全局注册。"), systemImage: "exclamationmark.triangle.fill")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.orange)
 
@@ -583,7 +614,7 @@ struct ClickLightSettingsView: View {
                 }
             }
 
-            SettingsCard(title: "Global Shortcuts") {
+            SettingsCard(title: L10n.t("Global Shortcuts", "全局快捷键")) {
                 VStack(spacing: 0) {
                     ForEach(Array(ClickShortcutAction.allCases.enumerated()), id: \.element) { index, action in
                         ShortcutRecorderField(
@@ -611,12 +642,12 @@ struct ClickLightSettingsView: View {
             }
 
             SettingsCard {
-                ModernRow(title: "Reset All Shortcuts",
-                          subtitle: "Restore the ClickLight toggle shortcut and disable optional shortcuts.") {
+                ModernRow(title: L10n.t("Reset All Shortcuts", "还原所有快捷键"),
+                          subtitle: L10n.t("Restore the ClickLight toggle shortcut and disable optional shortcuts.", "恢复 ClickLight 开关快捷键并停用可选快捷键。")) {
                     Button(role: .destructive) {
                         showShortcutResetConfirmation = true
                     } label: {
-                        Label("Reset", systemImage: "arrow.counterclockwise")
+                        Label(L10n.t("Reset", "还原"), systemImage: "arrow.counterclockwise")
                     }
                     .controlSize(.regular)
                 }
@@ -624,38 +655,38 @@ struct ClickLightSettingsView: View {
 
         }
         .confirmationDialog(
-            "Reset all keyboard shortcuts?",
+            L10n.t("Reset all keyboard shortcuts?", "还原所有键盘快捷键？"),
             isPresented: $showShortcutResetConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Reset", role: .destructive) {
+            Button(L10n.t("Reset", "还原"), role: .destructive) {
                 viewModel.resetAllShortcutBindings()
             }
-            Button("Cancel", role: .cancel) {}
+            Button(L10n.t("Cancel", "取消"), role: .cancel) {}
         } message: {
-            Text("This restores the ClickLight toggle shortcut and disables every optional shortcut.")
+            Text(L10n.t("This restores the ClickLight toggle shortcut and disables every optional shortcut.", "这会恢复 ClickLight 开关快捷键，并停用所有可选快捷键。"))
         }
     }
 
     private var profilesPane: some View {
         VStack(spacing: 16) {
             SettingsCard(
-                title: "Profiles",
-                subtitle: "Save reusable visual setups. Profiles do not include hotkeys, launch at login, menu layout, or activity history."
+                title: L10n.t("Profiles", "预设"),
+                subtitle: L10n.t("Save reusable visual setups. Profiles do not include hotkeys, launch at login, menu layout, or activity history.", "保存可复用的视觉配置。预设不包含快捷键、登录时启动、菜单布局或活动历史。")
             ) {
                 VStack(spacing: 0) {
                     ModernRow(
-                        title: "Save Current Settings",
-                        subtitle: "Use the current click, laser pointer, and shortcut-display settings."
+                        title: L10n.t("Save Current Settings", "保存当前设置"),
+                        subtitle: L10n.t("Use the current click, laser pointer, and shortcut-display settings.", "使用当前的点击、激光指针和快捷键显示设置。")
                     ) {
                         HStack(spacing: 8) {
-                            TextField("Profile name", text: $profileName)
+                            TextField(L10n.t("Profile name", "预设名称"), text: $profileName)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 180)
                             Button {
                                 saveCurrentProfile()
                             } label: {
-                                Label("Save", systemImage: "square.and.arrow.down")
+                                Label(L10n.t("Save", "保存"), systemImage: "square.and.arrow.down")
                             }
                             .disabled(profileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
@@ -668,20 +699,20 @@ struct ClickLightSettingsView: View {
                     ForEach(profileStore.profiles) { profile in
                         ModernRow(
                             title: profile.name,
-                            subtitle: "Created \(profile.createdAt.formatted(date: .abbreviated, time: .shortened))"
+                            subtitle: L10n.t("Created ", "创建于 ") + profile.createdAt.formatted(date: .abbreviated, time: .shortened)
                         ) {
                             HStack(spacing: 8) {
                                 Button {
                                     viewModel.applyProfile(profile)
                                 } label: {
-                                    Label("Apply", systemImage: "checkmark.circle")
+                                    Label(L10n.t("Apply", "应用"), systemImage: "checkmark.circle")
                                 }
                                 .disabled(isCurrentProfile(profile))
                                 Button(role: .destructive) {
                                     profileStore.delete(profile)
-                                    profileStatusMessage = "Deleted \(profile.name)."
+                                    profileStatusMessage = L10n.t("Deleted ", "已删除 ") + profile.name + "."
                                 } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Label(L10n.t("Delete", "删除"), systemImage: "trash")
                                 }
                             }
                         }
@@ -691,7 +722,7 @@ struct ClickLightSettingsView: View {
                     }
 
                     if profileStore.profiles.isEmpty {
-                        Text("No profiles yet.")
+                        Text(L10n.t("No profiles yet.", "还没有预设。"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -700,21 +731,21 @@ struct ClickLightSettingsView: View {
                 }
             }
 
-            SettingsCard(title: "Import and Export", subtitle: "Move profiles between Macs with a JSON file.") {
-                ModernRow(title: "Profiles File",
-                          subtitle: "Exports all saved profiles, not activity or app-level settings.") {
+            SettingsCard(title: L10n.t("Import and Export", "导入与导出"), subtitle: L10n.t("Move profiles between Macs with a JSON file.", "通过 JSON 文件在 Mac 之间迁移预设。")) {
+                ModernRow(title: L10n.t("Profiles File", "预设文件"),
+                          subtitle: L10n.t("Exports all saved profiles, not activity or app-level settings.", "导出所有已保存的预设，不含活动或 App 级设置。")) {
                     HStack(spacing: 8) {
                         Button {
                             exportProfiles()
                         } label: {
-                            Label("Export", systemImage: "square.and.arrow.up")
+                            Label(L10n.t("Export", "导出"), systemImage: "square.and.arrow.up")
                         }
                         .disabled(profileStore.profiles.isEmpty)
 
                         Button {
                             importProfiles()
                         } label: {
-                            Label("Import", systemImage: "square.and.arrow.down")
+                            Label(L10n.t("Import", "导入"), systemImage: "square.and.arrow.down")
                         }
                     }
                 }
@@ -732,14 +763,14 @@ struct ClickLightSettingsView: View {
     private var activityPane: some View {
         VStack(spacing: 16) {
             SettingsCard(
-                title: "Daily Clicks",
-                subtitle: "Your last seven days. Stored locally on this Mac."
+                title: L10n.t("Daily Clicks", "每日点击"),
+                subtitle: L10n.t("Your last seven days. Stored locally on this Mac.", "最近七天的数据，仅存储在这台 Mac 上。")
             ) {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(activityStore.today.totalClicks.formatted())
                         .font(.system(size: 32, weight: .semibold, design: .rounded))
                         .monospacedDigit()
-                    Text("clicks today")
+                    Text(L10n.t("clicks today", "次点击（今天）"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -750,44 +781,44 @@ struct ClickLightSettingsView: View {
                     .padding(.top, 8)
             }
 
-            SettingsCard(title: "Today") {
+            SettingsCard(title: L10n.t("Today", "今天")) {
                 HStack(spacing: 0) {
-                    ActivityMetric(title: "Left", value: activityStore.today.primaryClicks)
+                    ActivityMetric(title: L10n.t("Left", "左键"), value: activityStore.today.primaryClicks)
                     Divider().frame(height: 44)
-                    ActivityMetric(title: "Right", value: activityStore.today.secondaryClicks)
+                    ActivityMetric(title: L10n.t("Right", "右键"), value: activityStore.today.secondaryClicks)
                     Divider().frame(height: 44)
-                    ActivityMetric(title: "Middle", value: activityStore.today.middleClicks)
+                    ActivityMetric(title: L10n.t("Middle", "中键"), value: activityStore.today.middleClicks)
                     Divider().frame(height: 44)
-                    ActivityMetric(title: "Drags", value: activityStore.today.drags)
+                    ActivityMetric(title: L10n.t("Drags", "拖拽"), value: activityStore.today.drags)
                 }
                 .padding(.vertical, 6)
             }
 
             SettingsCard {
                 ModernRow(
-                    title: "Reset Activity History",
-                    subtitle: "Remove all click counts stored by ClickLight."
+                    title: L10n.t("Reset Activity History", "还原活动历史"),
+                    subtitle: L10n.t("Remove all click counts stored by ClickLight.", "删除 ClickLight 记录的所有点击次数。")
                 ) {
                     Button(role: .destructive) {
                         showActivityResetConfirmation = true
                     } label: {
-                        Label("Reset", systemImage: "arrow.counterclockwise")
+                        Label(L10n.t("Reset", "还原"), systemImage: "arrow.counterclockwise")
                     }
                     .controlSize(.regular)
                 }
             }
         }
         .confirmationDialog(
-            "Reset click activity history?",
+            L10n.t("Reset click activity history?", "还原点击活动历史？"),
             isPresented: $showActivityResetConfirmation,
             titleVisibility: .visible
         ) {
-            Button("Reset", role: .destructive) {
+            Button(L10n.t("Reset", "还原"), role: .destructive) {
                 activityStore.reset()
             }
-            Button("Cancel", role: .cancel) {}
+            Button(L10n.t("Cancel", "取消"), role: .cancel) {}
         } message: {
-            Text("This removes the daily click totals saved on this Mac.")
+            Text(L10n.t("This removes the daily click totals saved on this Mac.", "这会删除这台 Mac 上保存的每日点击总数。"))
         }
     }
 
@@ -815,7 +846,7 @@ struct ClickLightSettingsView: View {
     private func saveCurrentProfile() {
         guard let profile = profileStore.saveProfile(named: profileName, from: viewModel.settings) else { return }
         profileName = ""
-        profileStatusMessage = "Saved \(profile.name)."
+        profileStatusMessage = L10n.t("Saved ", "已保存 ") + profile.name + "."
     }
 
     private func isCurrentProfile(_ profile: ClickSettingsProfile) -> Bool {
@@ -831,9 +862,13 @@ struct ClickLightSettingsView: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             try profileStore.exportProfiles(to: url)
-            profileStatusMessage = "Exported \(profileStore.profiles.count) profile\(profileStore.profiles.count == 1 ? "" : "s")."
+            let count = profileStore.profiles.count
+            profileStatusMessage = L10n.t(
+                "Exported \(count) profile\(count == 1 ? "" : "s").",
+                "已导出 \(count) 个预设。"
+            )
         } catch {
-            profileStatusMessage = "Could not export profiles: \(error.localizedDescription)"
+            profileStatusMessage = L10n.t("Could not export profiles: ", "无法导出预设：") + error.localizedDescription
         }
     }
 
@@ -846,9 +881,12 @@ struct ClickLightSettingsView: View {
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {
             let count = try profileStore.importProfiles(from: url)
-            profileStatusMessage = "Imported \(count) profile\(count == 1 ? "" : "s")."
+            profileStatusMessage = L10n.t(
+                "Imported \(count) profile\(count == 1 ? "" : "s").",
+                "已导入 \(count) 个预设。"
+            )
         } catch {
-            profileStatusMessage = "Could not import profiles: \(error.localizedDescription)"
+            profileStatusMessage = L10n.t("Could not import profiles: ", "无法导入预设：") + error.localizedDescription
         }
     }
 
@@ -869,7 +907,7 @@ struct ClickLightSettingsView: View {
             }
             .labelsHidden()
             .pickerStyle(.segmented)
-            .accessibilityLabel("Live Shortcut \(title)")
+            .accessibilityLabel(L10n.t("Live Shortcut ", "实时快捷键") + title)
         }
     }
 
@@ -937,56 +975,56 @@ private struct MenuLayoutPane: View {
     }
 
     var body: some View {
-        SettingsCard(title: "Menu Sections", subtitle: "Keep essential controls visible and hide optional menu sections you do not use.") {
+        SettingsCard(title: L10n.t("Menu Sections", "菜单分区"), subtitle: L10n.t("Keep essential controls visible and hide optional menu sections you do not use.", "保留常用控制项，隐藏不使用的可选菜单分区。")) {
             VStack(spacing: 0) {
                 ModernRow(
-                    title: "Show Event Controls",
-                    subtitle: "Show Press, Release, Right Click, Middle Click, and Drag in the menu."
+                    title: L10n.t("Show Event Controls", "显示事件控制"),
+                    subtitle: L10n.t("Show Press, Release, Right Click, Middle Click, and Drag in the menu.", "在菜单中显示按下、松开、右键点击、中键点击和拖拽。")
                 ) {
                     Toggle("", isOn: binding(\.showEventControlsInMenu))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Event Controls")
+                        .accessibilityLabel(L10n.t("Show Event Controls", "显示事件控制"))
                 }
                 Divider().padding(.vertical, 6)
                 ModernRow(
-                    title: "Show Style Presets",
-                    subtitle: "Show Size, Intensity, Duration, and Colors in the menu."
+                    title: L10n.t("Show Style Presets", "显示样式预设"),
+                    subtitle: L10n.t("Show Size, Intensity, Duration, and Colors in the menu.", "在菜单中显示大小、强度、时长和颜色。")
                 ) {
                     Toggle("", isOn: binding(\.showStyleControlsInMenu))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Style Presets")
+                        .accessibilityLabel(L10n.t("Show Style Presets", "显示样式预设"))
                 }
                 Divider().padding(.vertical, 6)
                 ModernRow(
-                    title: "Show Profiles",
-                    subtitle: "Show saved profiles as a quick switcher in the menu."
+                    title: L10n.t("Show Profiles", "显示预设"),
+                    subtitle: L10n.t("Show saved profiles as a quick switcher in the menu.", "在菜单中显示已保存的预设以便快速切换。")
                 ) {
                     Toggle("", isOn: binding(\.showProfilesInMenu))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Profiles")
+                        .accessibilityLabel(L10n.t("Show Profiles", "显示预设"))
                 }
                 Divider().padding(.vertical, 6)
                 ModernRow(
-                    title: "Show Menu Bar Controls",
-                    subtitle: "Show menu bar text and click count controls in the menu."
+                    title: L10n.t("Show Menu Bar Controls", "显示菜单栏控制"),
+                    subtitle: L10n.t("Show menu bar text and click count controls in the menu.", "在菜单中显示菜单栏文字和点击次数控制。")
                 ) {
                     Toggle("", isOn: binding(\.showMenuBarControlsInMenu))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Menu Bar Controls")
+                        .accessibilityLabel(L10n.t("Show Menu Bar Controls", "显示菜单栏控制"))
                 }
                 Divider().padding(.vertical, 6)
                 ModernRow(
-                    title: "Show Launch at Login",
-                    subtitle: "Show Launch at Login in the menu."
+                    title: L10n.t("Show Launch at Login", "显示登录时启动"),
+                    subtitle: L10n.t("Show Launch at Login in the menu.", "在菜单中显示登录时启动。")
                 ) {
                     Toggle("", isOn: binding(\.showLaunchAtLoginInMenu))
                         .toggleStyle(.switch)
                         .labelsHidden()
-                        .accessibilityLabel("Show Launch at Login")
+                        .accessibilityLabel(L10n.t("Show Launch at Login", "显示登录时启动"))
                 }
             }
         }
@@ -1153,14 +1191,13 @@ private struct ActivityMetric: View {
 
 private struct ClickPreviewPad: NSViewRepresentable {
     let settings: ClickSettings
-    let activityStore: ClickActivityStore
 
     func makeNSView(context: Context) -> InteractiveClickPreviewView {
-        InteractiveClickPreviewView(settings: settings, activityStore: activityStore)
+        InteractiveClickPreviewView(settings: settings)
     }
 
     func updateNSView(_ nsView: InteractiveClickPreviewView, context: Context) {
-        nsView.apply(settings: settings, activityStore: activityStore)
+        nsView.apply(settings: settings)
     }
 }
 
@@ -1168,11 +1205,9 @@ private struct ClickPreviewPad: NSViewRepresentable {
 private final class InteractiveClickPreviewView: NSView {
     private let overlayView: ClickOverlayView
     private var settings: ClickSettings
-    private var activityStore: ClickActivityStore
 
-    init(settings: ClickSettings, activityStore: ClickActivityStore) {
+    init(settings: ClickSettings) {
         self.settings = settings
-        self.activityStore = activityStore
         self.overlayView = ClickOverlayView(
             screenFrame: CGRect(x: 0, y: 0, width: 200, height: 116),
             settings: settings
@@ -1203,9 +1238,8 @@ private final class InteractiveClickPreviewView: NSView {
         bounds.contains(point) ? self : nil
     }
 
-    func apply(settings: ClickSettings, activityStore: ClickActivityStore) {
+    func apply(settings: ClickSettings) {
         self.settings = settings
-        self.activityStore = activityStore
         overlayView.apply(settings: settings)
     }
 
@@ -1256,7 +1290,8 @@ private final class InteractiveClickPreviewView: NSView {
             location: location,
             timestamp: CACurrentMediaTime()
         )
-        activityStore.record(clickEvent)
+        // Preview clicks only render the overlay; they are not real user
+        // activity and must not be counted in the daily stats.
         overlayView.show(event: clickEvent, settings: settings)
     }
 }
@@ -1273,38 +1308,38 @@ enum SettingsPane: String, CaseIterable, Hashable {
     var title: String {
         switch self {
         case .general:
-            return "General"
+            return L10n.t("General", "通用")
         case .style:
-            return "Visual Style"
+            return L10n.t("Visual Style", "视觉效果")
         case .shortcuts:
-            return "Keyboard Shortcuts"
+            return L10n.t("Keyboard Shortcuts", "键盘快捷键")
         case .profiles:
-            return "Profiles"
+            return L10n.t("Profiles", "预设")
         case .events:
-            return "Event Visibility"
+            return L10n.t("Event Visibility", "事件可见性")
         case .activity:
-            return "Activity"
+            return L10n.t("Activity", "活动")
         case .menu:
-            return "Menu Layout"
+            return L10n.t("Menu Layout", "菜单布局")
         }
     }
 
     var subtitle: String {
         switch self {
         case .general:
-            return "Enable ClickLight, set startup behavior, and manage permissions."
+            return L10n.t("Enable ClickLight, set startup behavior, and manage permissions.", "启用 ClickLight、设置启动行为并管理权限。")
         case .style:
-            return "Size, intensity, duration, and color of click pulses."
+            return L10n.t("Size, intensity, duration, and color of click pulses.", "点击脉冲的大小、强度、时长与颜色。")
         case .shortcuts:
-            return "Set global shortcuts."
+            return L10n.t("Set global shortcuts.", "设置全局快捷键。")
         case .profiles:
-            return "Save and move reusable visual setups."
+            return L10n.t("Save and move reusable visual setups.", "保存和迁移可复用的视觉配置。")
         case .events:
-            return "Choose which interactions and shortcut overlays appear."
+            return L10n.t("Choose which interactions and shortcut overlays appear.", "选择要显示哪些交互与快捷键浮层。")
         case .activity:
-            return "A local daily view of your clicking."
+            return L10n.t("A local daily view of your clicking.", "本地记录的每日点击概览。")
         case .menu:
-            return "Choose which items appear in the status bar menu and their order."
+            return L10n.t("Choose which items appear in the status bar menu and their order.", "选择状态栏菜单中显示哪些项目及其顺序。")
         }
     }
 

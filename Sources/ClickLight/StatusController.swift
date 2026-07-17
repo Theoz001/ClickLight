@@ -102,7 +102,7 @@ final class StatusController: NSObject {
         StatusMenuConfiguration.apply(to: menu)
 
         menu.addItem(toggleItem(
-            title: "Enabled",
+            title: L10n.t("Enabled", "启用"),
             isOn: settings.isEnabled,
             action: #selector(toggleEnabled(_:)),
             shortcut: settings.shortcutBinding(for: .toggleEnabled)
@@ -110,13 +110,13 @@ final class StatusController: NSObject {
         menu.addItem(.separator())
 
         menu.addItem(toggleItem(
-            title: "Laser Pointer Mode",
+            title: L10n.t("Laser Pointer Mode", "激光指针模式"),
             isOn: settings.showLaserPointer,
             action: #selector(toggleLaserPointer(_:)),
             shortcut: settings.shortcutBinding(for: .toggleLaserPointer)
         ))
         menu.addItem(toggleItem(
-            title: "Show Live Keyboard Shortcuts",
+            title: L10n.t("Show Live Keyboard Shortcuts", "显示实时键盘快捷键"),
             isOn: settings.showLiveKeyboardShortcuts,
             action: #selector(toggleLiveKeyboardShortcuts(_:)),
             shortcut: settings.shortcutBinding(for: .toggleLiveKeyboardShortcuts)
@@ -125,31 +125,31 @@ final class StatusController: NSObject {
 
         if settings.showEventControlsInMenu {
             menu.addItem(toggleItem(
-                title: "Show Press",
+                title: L10n.t("Show Press", "显示按下"),
                 isOn: settings.showPress,
                 action: #selector(togglePress(_:)),
                 shortcut: settings.shortcutBinding(for: .toggleShowPress)
             ))
             menu.addItem(toggleItem(
-                title: "Show Release",
+                title: L10n.t("Show Release", "显示松开"),
                 isOn: settings.showRelease,
                 action: #selector(toggleRelease(_:)),
                 shortcut: settings.shortcutBinding(for: .toggleShowRelease)
             ))
             menu.addItem(toggleItem(
-                title: "Show Right Click",
+                title: L10n.t("Show Right Click", "显示右键点击"),
                 isOn: settings.showRightClick,
                 action: #selector(toggleRightClick(_:)),
                 shortcut: settings.shortcutBinding(for: .toggleShowRightClick)
             ))
             menu.addItem(toggleItem(
-                title: "Show Middle Click",
+                title: L10n.t("Show Middle Click", "显示中键点击"),
                 isOn: settings.showMiddleClick,
                 action: #selector(toggleMiddleClick(_:)),
                 shortcut: settings.shortcutBinding(for: .toggleShowMiddleClick)
             ))
             let showDragItem = toggleItem(
-                title: "Show Drag",
+                title: L10n.t("Show Drag", "显示拖拽"),
                 isOn: settings.showDrag,
                 action: #selector(toggleDrag(_:)),
                 shortcut: settings.shortcutBinding(for: .toggleShowDrag)
@@ -161,23 +161,24 @@ final class StatusController: NSObject {
 
         if settings.showStyleControlsInMenu {
             menu.addItem(submenu(
-                title: "Size",
+                title: L10n.t("Size", "大小"),
                 options: ClickSettingOptions.sizePresets,
                 selected: Double(settings.size),
                 action: #selector(selectSize(_:))
             ))
             menu.addItem(submenu(
-                title: "Intensity",
+                title: L10n.t("Intensity", "强度"),
                 options: ClickSettingOptions.intensityPresets,
                 selected: Double(settings.intensity),
                 action: #selector(selectIntensity(_:))
             ))
             menu.addItem(submenu(
-                title: "Duration",
+                title: L10n.t("Duration", "时长"),
                 options: ClickSettingOptions.durationPresets,
                 selected: settings.duration,
                 action: #selector(selectDuration(_:))
             ))
+            menu.addItem(pulseStyleSubmenu(selected: settings.pulseStyle))
             menu.addItem(colorSubmenu(selected: settings.colorPreset))
             menu.addItem(.separator())
         }
@@ -189,12 +190,12 @@ final class StatusController: NSObject {
 
         if settings.showMenuBarControlsInMenu {
             menu.addItem(toggleItem(
-                title: "Show Menu Bar Text",
+                title: L10n.t("Show Menu Bar Text", "显示菜单栏文字"),
                 isOn: settings.showMenuBarText,
                 action: #selector(toggleMenuBarText)
             ))
             menu.addItem(toggleItem(
-                title: "Show Click Count in Menu Bar",
+                title: L10n.t("Show Click Count in Menu Bar", "在菜单栏显示点击次数"),
                 isOn: settings.showMenuBarClickCount,
                 action: #selector(toggleMenuBarClickCount)
             ))
@@ -203,24 +204,28 @@ final class StatusController: NSObject {
 
         if settings.showLaunchAtLoginInMenu {
             menu.addItem(toggleItem(
-                title: "Launch at Login",
+                title: L10n.t("Launch at Login", "登录时启动"),
                 isOn: launchAtLogin.isEnabled,
                 action: #selector(toggleLaunchAtLogin)
             ))
             menu.addItem(.separator())
         }
 
-        let openSettingsItem = NSMenuItem(title: "Open Settings...", action: #selector(openSettings), keyEquivalent: ",")
+        let openSettingsItem = NSMenuItem(title: L10n.t("Open Settings...", "打开设置…"), action: #selector(openSettings), keyEquivalent: ",")
         openSettingsItem.target = self
         menu.addItem(openSettingsItem)
 
-        let permissionTitle = permissions.isAccessibilityTrusted ? "Accessibility: Granted" : "Open Accessibility Settings..."
+        let permissionTitle = permissions.isAccessibilityTrusted
+            ? L10n.t("Accessibility: Granted", "辅助功能：已授权")
+            : L10n.t("Open Accessibility Settings...", "打开辅助功能设置…")
         let permissionItem = NSMenuItem(title: permissionTitle, action: #selector(openAccessibilitySettings), keyEquivalent: "")
         permissionItem.target = self
         permissionItem.isEnabled = true
         menu.addItem(permissionItem)
         if settings.showLiveKeyboardShortcuts {
-            let inputTitle = permissions.isInputMonitoringTrusted ? "Input Monitoring: Granted" : "Open Input Monitoring Settings..."
+            let inputTitle = permissions.isInputMonitoringTrusted
+                ? L10n.t("Input Monitoring: Granted", "输入监控：已授权")
+                : L10n.t("Open Input Monitoring Settings...", "打开输入监控设置…")
             let inputItem = NSMenuItem(title: inputTitle, action: #selector(openInputMonitoringSettings), keyEquivalent: "")
             inputItem.target = self
             inputItem.isEnabled = true
@@ -230,7 +235,9 @@ final class StatusController: NSObject {
         menu.addItem(.separator())
         let updatesConfigured = updatesAreConfigured()
         let updateItem = NSMenuItem(
-            title: updatesConfigured ? "Check for Updates..." : "Updates: Not Configured",
+            title: updatesConfigured
+                ? L10n.t("Check for Updates...", "检查更新…")
+                : L10n.t("Updates: Not Configured", "更新：未配置"),
             action: updatesConfigured ? #selector(checkForUpdates) : nil,
             keyEquivalent: ""
         )
@@ -238,11 +245,11 @@ final class StatusController: NSObject {
         updateItem.isEnabled = updatesConfigured
         menu.addItem(updateItem)
 
-        let aboutItem = NSMenuItem(title: "About ClickLight", action: #selector(showAbout), keyEquivalent: "")
+        let aboutItem = NSMenuItem(title: L10n.t("About ClickLight", "关于 ClickLight"), action: #selector(showAbout), keyEquivalent: "")
         aboutItem.target = self
         menu.addItem(aboutItem)
 
-        let quitItem = NSMenuItem(title: "Quit ClickLight", action: #selector(quit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: L10n.t("Quit ClickLight", "退出 ClickLight"), action: #selector(quit), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
     }
@@ -258,6 +265,9 @@ final class StatusController: NSObject {
         }
         button.imagePosition = titleParts.isEmpty ? .imageOnly : .imageLeading
         button.title = titleParts.joined(separator: " ")
+        // Subtle state cue: dim the status item while ClickLight is disabled
+        // so a global-hotkey toggle has visible feedback.
+        button.alphaValue = settings.isEnabled ? 1.0 : 0.45
     }
 
     private func compactCount(_ value: Int) -> String {
@@ -306,7 +316,7 @@ final class StatusController: NSObject {
         }
         if selectedPreset == nil {
             menu.addItem(NSMenuItem.separator())
-            let custom = NSMenuItem(title: "Custom", action: nil, keyEquivalent: "")
+            let custom = NSMenuItem(title: L10n.t("Custom", "自定义"), action: nil, keyEquivalent: "")
             custom.state = .on
             custom.isEnabled = false
             menu.addItem(custom)
@@ -315,8 +325,22 @@ final class StatusController: NSObject {
         return item
     }
 
+    private func pulseStyleSubmenu(selected: ClickPulseStyle) -> NSMenuItem {
+        let item = NSMenuItem(title: L10n.t("Pulse Style", "脉冲样式"), action: nil, keyEquivalent: "")
+        let menu = NSMenu()
+        for style in ClickPulseStyle.allCases {
+            let child = NSMenuItem(title: style.title, action: #selector(selectPulseStyle(_:)), keyEquivalent: "")
+            child.target = self
+            child.representedObject = style.rawValue
+            child.state = style == selected ? .on : .off
+            menu.addItem(child)
+        }
+        item.submenu = menu
+        return item
+    }
+
     private func colorSubmenu(selected: ClickColorPreset) -> NSMenuItem {
-        let item = NSMenuItem(title: "Colors", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: L10n.t("Colors", "颜色"), action: nil, keyEquivalent: "")
         let menu = NSMenu()
         for preset in ClickColorPreset.allCases where preset != .custom {
             let child = NSMenuItem(title: preset.title, action: #selector(selectColor(_:)), keyEquivalent: "")
@@ -329,13 +353,13 @@ final class StatusController: NSObject {
         menu.addItem(NSMenuItem.separator())
 
         if selected == .custom {
-            let selectedCustom = NSMenuItem(title: "Custom (Configured in Settings)", action: nil, keyEquivalent: "")
+            let selectedCustom = NSMenuItem(title: L10n.t("Custom (Configured in Settings)", "自定义（在设置中配置）"), action: nil, keyEquivalent: "")
             selectedCustom.state = .on
             selectedCustom.isEnabled = false
             menu.addItem(selectedCustom)
         }
 
-        let configureCustom = NSMenuItem(title: "Configure Custom Colors...", action: #selector(openVisualStyleSettings), keyEquivalent: "")
+        let configureCustom = NSMenuItem(title: L10n.t("Configure Custom Colors...", "配置自定义颜色…"), action: #selector(openVisualStyleSettings), keyEquivalent: "")
         configureCustom.target = self
         menu.addItem(configureCustom)
 
@@ -344,12 +368,12 @@ final class StatusController: NSObject {
     }
 
     private func profilesSubmenu(settings: ClickSettings) -> NSMenuItem {
-        let item = NSMenuItem(title: "Profiles", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: L10n.t("Profiles", "预设"), action: nil, keyEquivalent: "")
         let menu = NSMenu()
         let currentSettings = ClickProfileSettings(settings: settings)
 
         if profileStore.profiles.isEmpty {
-            let emptyItem = NSMenuItem(title: "No Profiles Saved", action: nil, keyEquivalent: "")
+            let emptyItem = NSMenuItem(title: L10n.t("No Profiles Saved", "尚未保存预设"), action: nil, keyEquivalent: "")
             emptyItem.isEnabled = false
             menu.addItem(emptyItem)
         } else {
@@ -364,7 +388,7 @@ final class StatusController: NSObject {
         }
 
         menu.addItem(.separator())
-        let manageItem = NSMenuItem(title: "Manage Profiles...", action: #selector(openProfileSettings), keyEquivalent: "")
+        let manageItem = NSMenuItem(title: L10n.t("Manage Profiles...", "管理预设…"), action: #selector(openProfileSettings), keyEquivalent: "")
         manageItem.target = self
         menu.addItem(manageItem)
 
@@ -465,6 +489,14 @@ final class StatusController: NSObject {
         settingsStore.update { $0.colorPreset = preset }
     }
 
+    @objc private func selectPulseStyle(_ sender: NSMenuItem) {
+        guard
+            let rawValue = sender.representedObject as? String,
+            let style = ClickPulseStyle(rawValue: rawValue)
+        else { return }
+        settingsStore.update { $0.pulseStyle = style }
+    }
+
     @objc private func selectProfile(_ sender: NSMenuItem) {
         guard
             let rawValue = sender.representedObject as? String,
@@ -492,7 +524,7 @@ final class StatusController: NSObject {
     }
 
     @objc private func showAbout() {
-        let credits = NSMutableAttributedString(string: "Source on GitHub")
+        let credits = NSMutableAttributedString(string: L10n.t("Source on GitHub", "在 GitHub 上查看源码"))
         credits.addAttributes(
             [
                 .link: URL(string: "https://github.com/aurorascharff/ClickLight")!,

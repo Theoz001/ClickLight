@@ -31,46 +31,46 @@ struct ShortcutRecorderField: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 if isRecording {
-                    Text("Press shortcut...")
+                    Text(L10n.t("Press shortcut...", "请按下快捷键…"))
                         .font(.body)
                         .foregroundStyle(.secondary)
                         .frame(width: 112, alignment: .trailing)
-                        .accessibilityLabel("Waiting for shortcut input")
+                        .accessibilityLabel(L10n.t("Waiting for shortcut input", "等待快捷键输入"))
 
-                    Button("Cancel") {
+                    Button(L10n.t("Cancel", "取消")) {
                         stopRecording()
                     }
                     .buttonStyle(.bordered)
-                    .help("Cancel shortcut recording.")
+                    .help(L10n.t("Cancel shortcut recording.", "取消快捷键录制。"))
                 } else {
-                    Text(currentBinding?.displayString ?? "None")
+                    Text(currentBinding?.displayString ?? L10n.t("None", "无"))
                         .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(currentBinding == nil ? .secondary : .primary)
                         .frame(width: 112, alignment: .trailing)
                         .lineLimit(1)
-                        .accessibilityLabel(currentBinding.map { "Current shortcut: \($0.descriptiveString)" } ?? "No shortcut assigned")
-                        .help(currentBinding?.descriptiveString ?? "No shortcut configured.")
+                        .accessibilityLabel(currentBinding.map { L10n.t("Current shortcut: ", "当前快捷键：") + $0.descriptiveString } ?? L10n.t("No shortcut assigned", "未指定快捷键"))
+                        .help(currentBinding?.descriptiveString ?? L10n.t("No shortcut configured.", "未配置快捷键。"))
 
-                    Button("Record") {
+                    Button(L10n.t("Record", "录制")) {
                         startRecording()
                     }
                     .buttonStyle(.bordered)
-                    .help("Record a new shortcut.")
+                    .help(L10n.t("Record a new shortcut.", "录制新快捷键。"))
 
                     if currentBinding != nil {
-                        Button("Clear") {
+                        Button(L10n.t("Clear", "清除")) {
                             onClear()
                         }
                         .buttonStyle(.bordered)
-                        .help("Remove this shortcut.")
+                        .help(L10n.t("Remove this shortcut.", "移除此快捷键。"))
                     }
 
                     if isCustom, defaultBinding != nil {
-                        Button("Reset") {
+                        Button(L10n.t("Reset", "还原")) {
                             onReset()
                         }
                         .buttonStyle(.bordered)
-                        .help("Reset this shortcut to default.")
+                        .help(L10n.t("Reset this shortcut to default.", "将此快捷键还原为默认。"))
                     }
                 }
             }

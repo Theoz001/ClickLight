@@ -1,30 +1,34 @@
 import Foundation
 
 struct ClickNumericPreset: Equatable {
-    let title: String
+    let titleEN: String
+    let titleZH: String
     let value: Double
+
+    /// Resolved at call time so language switches apply to rebuilt UI.
+    var title: String { L10n.t(titleEN, titleZH) }
 }
 
 enum ClickSettingOptions {
     static let sizePresets: [ClickNumericPreset] = [
-        .init(title: "Small", value: 44),
-        .init(title: "Medium", value: 64),
-        .init(title: "Large", value: 88),
-        .init(title: "Huge", value: 116)
+        .init(titleEN: "Small", titleZH: "小", value: 44),
+        .init(titleEN: "Medium", titleZH: "中", value: 64),
+        .init(titleEN: "Large", titleZH: "大", value: 88),
+        .init(titleEN: "Huge", titleZH: "特大", value: 116)
     ]
 
     static let intensityPresets: [ClickNumericPreset] = [
-        .init(title: "Subtle", value: 0.28),
-        .init(title: "Normal", value: 0.7),
-        .init(title: "Bright", value: 1.0),
-        .init(title: "Beacon", value: 1.35)
+        .init(titleEN: "Subtle", titleZH: "微弱", value: 0.28),
+        .init(titleEN: "Normal", titleZH: "标准", value: 0.7),
+        .init(titleEN: "Bright", titleZH: "明亮", value: 1.0),
+        .init(titleEN: "Beacon", titleZH: "耀眼", value: 1.35)
     ]
 
     static let durationPresets: [ClickNumericPreset] = [
-        .init(title: "Snappy", value: 0.28),
-        .init(title: "Normal", value: 0.48),
-        .init(title: "Long", value: 0.72),
-        .init(title: "Very Long", value: 1.0)
+        .init(titleEN: "Snappy", titleZH: "短促", value: 0.28),
+        .init(titleEN: "Normal", titleZH: "标准", value: 0.48),
+        .init(titleEN: "Long", titleZH: "较长", value: 0.72),
+        .init(titleEN: "Very Long", titleZH: "很长", value: 1.0)
     ]
 
     static func matchingPreset(

@@ -29,7 +29,7 @@ final class SettingsWindowController: NSWindowController {
             )
         )
         let window = NSWindow(contentViewController: hosting)
-        window.title = "ClickLight Settings"
+        window.title = L10n.t("ClickLight Settings", "ClickLight 设置")
         window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
         window.setContentSize(NSSize(width: 900, height: 580))
         window.minSize = NSSize(width: 820, height: 480)
@@ -37,6 +37,18 @@ final class SettingsWindowController: NSWindowController {
         window.isReleasedWhenClosed = false
 
         super.init(window: window)
+
+        // Keep the window title in sync with the selected language.
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(settingsDidChange),
+            name: SettingsStore.didChangeNotification,
+            object: nil
+        )
+    }
+
+    @objc private func settingsDidChange() {
+        window?.title = L10n.t("ClickLight Settings", "ClickLight 设置")
     }
 
     required init?(coder: NSCoder) {
@@ -303,7 +315,10 @@ final class ClickLightSettingsViewModel: NSObject, ObservableObject {
     @discardableResult
     func updateShortcutBinding(_ binding: HotKeyBinding, for action: ClickShortcutAction) -> Bool {
         if let conflictingAction = conflictAction(for: binding, excluding: action) {
-            let message = "Matches \(conflictingAction.title). Choose a unique shortcut."
+            let message = L10n.t(
+                "Matches \(conflictingAction.title). Choose a unique shortcut.",
+                "与「\(conflictingAction.title)」冲突。请使用不同的快捷键。"
+            )
             shortcutErrors[action] = message
             return false
         }
@@ -363,7 +378,10 @@ final class ClickLightSettingsViewModel: NSObject, ObservableObject {
                 continue
             }
 
-            errors[action] = "Matches \(other.title). Choose a unique shortcut."
+            errors[action] = L10n.t(
+                "Matches \(other.title). Choose a unique shortcut.",
+                "与「\(other.title)」冲突。请使用不同的快捷键。"
+            )
         }
 
         return errors
