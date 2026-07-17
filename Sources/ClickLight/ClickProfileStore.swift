@@ -79,6 +79,8 @@ struct ClickProfileSettings: Codable, Equatable {
     var laserInnerColorRed: CGFloat
     var laserInnerColorGreen: CGFloat
     var laserInnerColorBlue: CGFloat
+    var laserStrokeWidth: Double
+    var laserStrokeDuration: Double
 
     init(settings: ClickSettings) {
         self.showPress = settings.showPress
@@ -118,6 +120,8 @@ struct ClickProfileSettings: Codable, Equatable {
         self.laserInnerColorRed = settings.laserInnerColorRed
         self.laserInnerColorGreen = settings.laserInnerColorGreen
         self.laserInnerColorBlue = settings.laserInnerColorBlue
+        self.laserStrokeWidth = settings.laserStrokeWidth
+        self.laserStrokeDuration = settings.laserStrokeDuration
     }
 
     func apply(to settings: inout ClickSettings) {
@@ -158,6 +162,8 @@ struct ClickProfileSettings: Codable, Equatable {
         settings.laserInnerColorRed = laserInnerColorRed
         settings.laserInnerColorGreen = laserInnerColorGreen
         settings.laserInnerColorBlue = laserInnerColorBlue
+        settings.laserStrokeWidth = laserStrokeWidth
+        settings.laserStrokeDuration = laserStrokeDuration
     }
 
     // pulseStyle was added after profiles shipped; tolerate its absence so
@@ -201,6 +207,8 @@ struct ClickProfileSettings: Codable, Equatable {
         laserInnerColorRed = try container.decode(CGFloat.self, forKey: .laserInnerColorRed)
         laserInnerColorGreen = try container.decode(CGFloat.self, forKey: .laserInnerColorGreen)
         laserInnerColorBlue = try container.decode(CGFloat.self, forKey: .laserInnerColorBlue)
+        laserStrokeWidth = try container.decodeIfPresent(Double.self, forKey: .laserStrokeWidth) ?? 6.0
+        laserStrokeDuration = try container.decodeIfPresent(Double.self, forKey: .laserStrokeDuration) ?? 0.9
     }
 }
 

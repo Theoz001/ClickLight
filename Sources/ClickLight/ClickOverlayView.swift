@@ -102,7 +102,7 @@ final class ClickOverlayView: NSView {
 
         let now = CACurrentMediaTime()
         pulses = pulses.filter { !$0.isExpired(at: now) }
-        completedLaserStrokes = completedLaserStrokes.filter { !$0.isExpired(at: now) }
+        completedLaserStrokes = completedLaserStrokes.filter { !$0.isExpired(at: now, fadeDuration: settings.laserStrokeDuration) }
         if liveShortcutLabel?.isExpired(at: now) == true {
             liveShortcutLabel = nil
         }
@@ -161,7 +161,7 @@ final class ClickOverlayView: NSView {
         guard settings.showLaserPointer else { return }
 
         for stroke in completedLaserStrokes {
-            drawLaserStroke(stroke, alpha: stroke.alpha(at: now), in: context)
+            drawLaserStroke(stroke, alpha: stroke.alpha(at: now, fadeDuration: settings.laserStrokeDuration), in: context)
         }
 
         if let activeLaserStroke {
@@ -190,6 +190,9 @@ final class ClickOverlayView: NSView {
         let laserColor = settings.laserColor
         let middleColor = settings.laserMiddleColor
         let innerColor = settings.laserInnerColor
+        // All four layers scale proportionally from the configured base width
+        // (6 = the legacy hardcoded middle layer width).
+        let baseWidth = CGFloat(settings.laserStrokeWidth)
         context.saveGState()
         context.setLineCap(.round)
         context.setLineJoin(.round)
@@ -202,22 +205,22 @@ final class ClickOverlayView: NSView {
 
         context.addPath(path)
         context.setStrokeColor(laserColor.withAlphaComponent(alpha * 0.2).cgColor)
-        context.setLineWidth(14)
+        context.setLineWidth(baseWidth * 7 / 3)
         context.strokePath()
 
         context.addPath(path)
         context.setStrokeColor(laserColor.withAlphaComponent(alpha).cgColor)
-        context.setLineWidth(6)
+        context.setLineWidth(baseWidth)
         context.strokePath()
 
         context.addPath(path)
         context.setStrokeColor(middleColor.withAlphaComponent(alpha).cgColor)
-        context.setLineWidth(4)
+        context.setLineWidth(baseWidth * 2 / 3)
         context.strokePath()
 
         context.addPath(path)
         context.setStrokeColor(innerColor.withAlphaComponent(alpha).cgColor)
-        context.setLineWidth(2)
+        context.setLineWidth(baseWidth / 3)
         context.strokePath()
         context.restoreGState()
     }
@@ -423,6 +426,10 @@ final class ClickOverlayView: NSView {
             drawShockwave(pulse: pulse, progress: progress, alpha: alpha, intensity: visualIntensity, in: context)
         case .spark:
             drawSpark(pulse: pulse, progress: progress, eased: eased, alpha: alpha, intensity: visualIntensity, in: context)
+        case .lightning:
+            drawLightning(pulse: pulse, progress: progress, alpha: alpha, intensity: visualIntensity, in: context)
+        case .exp:
+            drawExp(pulse: pulse, progress: progress, eased: eased, alpha: alpha, intensity: visualIntensity, in: context)
         }
 
         context.restoreGState()
@@ -575,6 +582,133 @@ final class ClickOverlayView: NSView {
             radius: pulse.baseSize * 0.07 * (1 - 0.5 * eased),
             color: pulse.color,
             alpha: clamp(alpha * 0.9)
+        )
+    }
+
+    private func drawLightning(pulse: ClickPulse, progress: CGFloat, alpha: CGFloat, intensity: CGFloat, in context: CGContext) {
+        // Full brightness for the first ~15% of the pulse, then fast decay.
+        let envelope: CGFloat = progress < 0.15 ? 1 : max(0, 1 - (progress - 0.15) / 0.6)
+        guard envelope > 0 else { return }
+
+        // Bolts shoot outward quickly, then the decay takes over.
+        let reach = 1 - pow(1 - min(1, progress / 0.12), 2)
+        let coreColor = pulse.color.blended(withFraction: 0.65, of: .white) ?? .white
+
+        for bolt in pulse.lightningBolts {
+            let flicker = 0.75 + 0.25 * sin(progress * 40 + bolt.phase)
+            let boltAlpha = clamp(alpha * envelope * flicker)
+            let coreWidth = max(1, pulse.baseSize * 0.022 * bolt.width)
+
+            drawLightningPath(
+                bolt.points,
+                from: pulse.point,
+                scale: pulse.baseSize * reach,
+                lineWidth: coreWidth * 3.5,
+                color: pulse.color,
+                alpha: clamp(boltAlpha * 0.28 * intensity),
+                in: context
+            )
+            drawLightningPath(
+                bolt.points,
+                from: pulse.point,
+                scale: pulse.baseSize * reach,
+                lineWidth: coreWidth,
+                color: coreColor,
+                alpha: boltAlpha,
+                in: context
+            )
+            for branch in bolt.branches {
+                drawLightningPath(
+                    branch,
+                    from: pulse.point,
+                    scale: pulse.baseSize * reach,
+                    lineWidth: coreWidth * 2.4,
+                    color: pulse.color,
+                    alpha: clamp(boltAlpha * 0.2 * intensity),
+                    in: context
+                )
+                drawLightningPath(
+                    branch,
+                    from: pulse.point,
+                    scale: pulse.baseSize * reach,
+                    lineWidth: coreWidth * 0.7,
+                    color: coreColor,
+                    alpha: clamp(boltAlpha * 0.8),
+                    in: context
+                )
+            }
+        }
+
+        // Bright core at the strike point while the bolts are at full reach.
+        let coreFlash = 1 - min(1, progress / 0.2)
+        drawDot(
+            context: context,
+            point: pulse.point,
+            radius: pulse.baseSize * 0.09,
+            color: coreColor,
+            alpha: clamp(alpha * coreFlash)
+        )
+    }
+
+    private func drawLightningPath(
+        _ unitPoints: [CGPoint],
+        from origin: CGPoint,
+        scale: CGFloat,
+        lineWidth: CGFloat,
+        color: NSColor,
+        alpha: CGFloat,
+        in context: CGContext
+    ) {
+        guard unitPoints.count >= 2, alpha > 0 else { return }
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: origin.x + unitPoints[0].x * scale, y: origin.y + unitPoints[0].y * scale))
+        for point in unitPoints.dropFirst() {
+            path.addLine(to: CGPoint(x: origin.x + point.x * scale, y: origin.y + point.y * scale))
+        }
+        context.addPath(path)
+        context.setStrokeColor(color.withAlphaComponent(alpha).cgColor)
+        context.setLineWidth(lineWidth)
+        context.strokePath()
+    }
+
+    private func drawExp(pulse: ClickPulse, progress: CGFloat, eased: CGFloat, alpha: CGFloat, intensity: CGFloat, in context: CGContext) {
+        // Pop-in: 0.6 → 1.05 → 1.0 over the first 20% of the pulse.
+        let popProgress = min(1, progress / 0.2)
+        let popScale: CGFloat = popProgress < 0.6
+            ? 0.6 + 0.45 * (popProgress / 0.6)
+            : 1.05 - 0.05 * ((popProgress - 0.6) / 0.4)
+        let fontSize = max(20, pulse.baseSize * 0.55) * popScale
+        // Float up ~1.2x the font height with ease-out.
+        let rise = fontSize * 1.2 * eased
+
+        // Brief same-color ground flash behind the text.
+        let flashFade = 1 - min(1, progress * 3)
+        drawGlowIfNeeded(
+            context: context,
+            point: pulse.point,
+            radius: pulse.baseSize * 0.35,
+            color: pulse.color,
+            alpha: flashFade * intensity
+        )
+
+        let text = "+1"
+        let font = NSFont.systemFont(ofSize: fontSize, weight: .heavy)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: pulse.color.withAlphaComponent(clamp(alpha)),
+            // Negative stroke width fills and strokes, giving a readable white
+            // edge on any background.
+            .strokeColor: NSColor.white.withAlphaComponent(clamp(alpha * 0.85)),
+            .strokeWidth: -4.0
+        ]
+        let textSize = (text as NSString).size(withAttributes: attributes)
+        let center = CGPoint(
+            x: pulse.point.x,
+            y: pulse.point.y + pulse.baseSize * 0.2 + rise
+        )
+        (text as NSString).draw(
+            at: CGPoint(x: center.x - textSize.width / 2, y: center.y - textSize.height / 2),
+            withAttributes: attributes
         )
     }
 
@@ -762,6 +896,7 @@ private struct ClickPulse {
     let color: NSColor
     let style: ClickPulseStyle
     let particles: [PulseParticle]
+    let lightningBolts: [LightningBolt]
 
     init(
         kind: ClickKind,
@@ -784,6 +919,7 @@ private struct ClickPulse {
         let seed = UInt64(truncatingIfNeeded: Int64(startTime * 1_000_000))
             &+ UInt64(truncatingIfNeeded: Int64(point.x * 31 + point.y * 57))
         self.particles = PulseParticle.makeBurst(seed: seed, count: 13)
+        self.lightningBolts = LightningBolt.makeBolts(seed: seed &+ 0x51_15_7E_D1)
     }
 
     func progress(at time: CFTimeInterval) -> CGFloat {
@@ -816,6 +952,85 @@ private struct PulseParticle {
                 distance: 0.55 + nextUnit() * 0.6,
                 size: 0.6 + nextUnit() * 0.8,
                 alpha: 0.55 + nextUnit() * 0.45
+            )
+        }
+    }
+}
+
+/// A deterministic pseudo-random lightning bolt in unit space: polylines are
+/// expressed as fractions of the pulse's baseSize radiating from the origin,
+/// so the same bolt can be scaled by the animation's outward reach per frame.
+private struct LightningBolt {
+    /// Jagged main polyline from the origin outward (|point| in 0...~1.2).
+    let points: [CGPoint]
+    /// Shorter jagged polylines branching off the main one (unit space).
+    let branches: [[CGPoint]]
+    /// Flicker phase so bolts don't pulse in lockstep.
+    let phase: CGFloat
+    /// Per-bolt width factor.
+    let width: CGFloat
+
+    /// Generated once per pulse from the pulse seed (no per-frame RNG).
+    static func makeBolts(seed: UInt64) -> [LightningBolt] {
+        var state = seed == 0 ? 0x9E3779B97F4A7C15 : seed
+        func nextUnit() -> CGFloat {
+            state = state &* 6364136223846793005 &+ 1442695040888963407
+            return CGFloat((state >> 32) & 0xFFFFFF) / CGFloat(0x1000000)
+        }
+
+        func jaggedPolyline(
+            from start: CGPoint,
+            angle: CGFloat,
+            length: CGFloat,
+            segments: Int,
+            jitter: CGFloat
+        ) -> [CGPoint] {
+            (0...segments).map { segment in
+                let t = CGFloat(segment) / CGFloat(segments)
+                let distance = t * length
+                let wobble = (segment == 0 || segment == segments)
+                    ? 0
+                    : (nextUnit() - 0.5) * jitter * (1 - t * 0.4)
+                let radial = segment == 0 ? 0 : (nextUnit() - 0.5) * jitter * 0.5
+                return CGPoint(
+                    x: start.x + cos(angle + wobble) * (distance + radial),
+                    y: start.y + sin(angle + wobble) * (distance + radial)
+                )
+            }
+        }
+
+        let count = 5 + Int(nextUnit() * 4) // 5...8 bolts
+        return (0..<count).map { index in
+            let angle = (CGFloat(index) / CGFloat(count)) * 2 * .pi + (nextUnit() - 0.5) * 0.8
+            let length = 0.75 + nextUnit() * 0.45
+            let segments = 8 + Int(nextUnit() * 7) // 8...14 segments
+            let points = jaggedPolyline(
+                from: .zero,
+                angle: angle,
+                length: length,
+                segments: segments,
+                jitter: 0.24
+            )
+
+            var branches: [[CGPoint]] = []
+            let branchCount = nextUnit() < 0.6 ? 1 + Int(nextUnit() * 2) : 0 // 0...2
+            for _ in 0..<branchCount {
+                let startIndex = 2 + Int(nextUnit() * CGFloat(segments - 4))
+                let branchAngle = angle + (nextUnit() < 0.5 ? -1 : 1) * (0.5 + nextUnit() * 0.7)
+                branches.append(jaggedPolyline(
+                    from: points[startIndex],
+                    angle: branchAngle,
+                    length: length * (0.25 + nextUnit() * 0.25),
+                    segments: 3 + Int(nextUnit() * 3),
+                    jitter: 0.3
+                ))
+            }
+
+            return LightningBolt(
+                points: points,
+                branches: branches,
+                phase: nextUnit() * 2 * .pi,
+                width: 0.8 + nextUnit() * 0.5
             )
         }
     }
@@ -858,8 +1073,6 @@ private struct LiveShortcutLabel {
 }
 
 private struct LaserStroke {
-    static let fadeDuration: TimeInterval = 0.9
-
     var points: [CGPoint]
     var completedAt: CFTimeInterval?
 
@@ -868,14 +1081,14 @@ private struct LaserStroke {
         return hypot(last.x - point.x, last.y - point.y) >= 2.5
     }
 
-    func alpha(at time: CFTimeInterval) -> CGFloat {
+    func alpha(at time: CFTimeInterval, fadeDuration: TimeInterval) -> CGFloat {
         guard let completedAt else { return 1 }
-        let progress = CGFloat(max(0, min(1, (time - completedAt) / Self.fadeDuration)))
+        let progress = CGFloat(max(0, min(1, (time - completedAt) / fadeDuration)))
         return 1 - progress
     }
 
-    func isExpired(at time: CFTimeInterval) -> Bool {
+    func isExpired(at time: CFTimeInterval, fadeDuration: TimeInterval) -> Bool {
         guard let completedAt else { return false }
-        return time - completedAt >= Self.fadeDuration
+        return time - completedAt >= fadeDuration
     }
 }

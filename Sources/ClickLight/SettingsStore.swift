@@ -47,6 +47,8 @@ struct ClickSettings: Equatable {
     var laserInnerColorRed: CGFloat
     var laserInnerColorGreen: CGFloat
     var laserInnerColorBlue: CGFloat
+    var laserStrokeWidth: Double
+    var laserStrokeDuration: Double
     var toggleEnabledHotKey: HotKeyBinding?
     var toggleLaserPointerHotKey: HotKeyBinding?
     var toggleShowPressHotKey: HotKeyBinding?
@@ -176,6 +178,8 @@ struct ClickSettings: Equatable {
         laserInnerColorRed: 1.0,
         laserInnerColorGreen: 1.0,
         laserInnerColorBlue: 1.0,
+        laserStrokeWidth: 6.0,
+        laserStrokeDuration: 0.9,
         toggleEnabledHotKey: ClickShortcutAction.toggleEnabled.defaultBinding,
         toggleLaserPointerHotKey: ClickShortcutAction.toggleLaserPointer.defaultBinding,
         toggleShowPressHotKey: ClickShortcutAction.toggleShowPress.defaultBinding,
@@ -301,6 +305,8 @@ enum ClickPulseStyle: String, CaseIterable, Codable, Equatable {
     case particles
     case shockwave
     case spark
+    case lightning
+    case exp
 
     var title: String {
         switch self {
@@ -314,6 +320,10 @@ enum ClickPulseStyle: String, CaseIterable, Codable, Equatable {
             return L10n.t("Shockwave", "冲击波")
         case .spark:
             return L10n.t("Spark", "火花")
+        case .lightning:
+            return L10n.t("Lightning", "千鸟闪电")
+        case .exp:
+            return L10n.t("EXP +1", "经验 +1")
         }
     }
 }
@@ -516,6 +526,8 @@ final class SettingsStore {
         static let laserInnerColorRed = "laserInnerColorRed"
         static let laserInnerColorGreen = "laserInnerColorGreen"
         static let laserInnerColorBlue = "laserInnerColorBlue"
+        static let laserStrokeWidth = "laserStrokeWidth"
+        static let laserStrokeDuration = "laserStrokeDuration"
         static let showEventControlsInMenu = "showEventControlsInMenu"
         static let showStyleControlsInMenu = "showStyleControlsInMenu"
         static let showProfilesInMenu = "showProfilesInMenu"
@@ -606,6 +618,8 @@ final class SettingsStore {
                 laserInnerColorRed: CGFloat(defaults.double(forKey: Key.laserInnerColorRed)).sanitizedColorComponent,
                 laserInnerColorGreen: CGFloat(defaults.double(forKey: Key.laserInnerColorGreen)).sanitizedColorComponent,
                 laserInnerColorBlue: CGFloat(defaults.double(forKey: Key.laserInnerColorBlue)).sanitizedColorComponent,
+                laserStrokeWidth: defaults.double(forKey: Key.laserStrokeWidth),
+                laserStrokeDuration: defaults.double(forKey: Key.laserStrokeDuration),
                 toggleEnabledHotKey: shortcutBinding(
                     keyCode: Key.toggleEnabledHotKeyCode,
                     modifiers: Key.toggleEnabledHotKeyModifiers,
@@ -700,6 +714,8 @@ final class SettingsStore {
             defaults.set(Double(newValue.laserInnerColorRed), forKey: Key.laserInnerColorRed)
             defaults.set(Double(newValue.laserInnerColorGreen), forKey: Key.laserInnerColorGreen)
             defaults.set(Double(newValue.laserInnerColorBlue), forKey: Key.laserInnerColorBlue)
+            defaults.set(newValue.laserStrokeWidth, forKey: Key.laserStrokeWidth)
+            defaults.set(newValue.laserStrokeDuration, forKey: Key.laserStrokeDuration)
             saveShortcutBinding(newValue.toggleEnabledHotKey, keyCode: Key.toggleEnabledHotKeyCode, modifiers: Key.toggleEnabledHotKeyModifiers, isEnabled: Key.toggleEnabledHotKeyIsEnabled)
             saveShortcutBinding(newValue.toggleLaserPointerHotKey, keyCode: Key.toggleLaserPointerHotKeyCode, modifiers: Key.toggleLaserPointerHotKeyModifiers, isEnabled: Key.toggleLaserPointerHotKeyIsEnabled)
             saveShortcutBinding(newValue.toggleShowPressHotKey, keyCode: Key.toggleShowPressHotKeyCode, modifiers: Key.toggleShowPressHotKeyModifiers, isEnabled: Key.toggleShowPressHotKeyIsEnabled)
@@ -783,6 +799,8 @@ final class SettingsStore {
             Key.laserInnerColorRed: Double(defaults.laserInnerColorRed),
             Key.laserInnerColorGreen: Double(defaults.laserInnerColorGreen),
             Key.laserInnerColorBlue: Double(defaults.laserInnerColorBlue),
+            Key.laserStrokeWidth: defaults.laserStrokeWidth,
+            Key.laserStrokeDuration: defaults.laserStrokeDuration,
             Key.toggleEnabledHotKeyCode: ClickShortcutAction.toggleEnabled.defaultBinding!.keyCode,
             Key.toggleEnabledHotKeyModifiers: ClickShortcutAction.toggleEnabled.defaultBinding!.carbonModifiers,
             Key.toggleEnabledHotKeyIsEnabled: true,

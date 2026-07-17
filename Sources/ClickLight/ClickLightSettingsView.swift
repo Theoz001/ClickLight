@@ -323,7 +323,8 @@ struct ClickLightSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
+                .fixedSize()
                 .accessibilityLabel(L10n.t("Pulse Style", "脉冲样式"))
             }
 
@@ -533,6 +534,35 @@ struct ClickLightSettingsView: View {
                         .accessibilityLabel(L10n.t("Laser Dot Follows Pointer", "激光点跟随指针"))
                         .disabled(!viewModel.settings.showLaserPointer)
                 }
+                Divider().padding(.vertical, 6)
+                VStack(alignment: .leading, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(L10n.t("Stroke Width", "划线粗细"))
+                            .font(.callout.weight(.medium))
+                        modernSlider(
+                            label: L10n.t("Stroke Width", "划线粗细"),
+                            value: binding(\.laserStrokeWidth),
+                            range: 2...24,
+                            lower: "2",
+                            upper: "24",
+                            readout: String(format: "%.1f px", viewModel.settings.laserStrokeWidth)
+                        )
+                    }
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(L10n.t("Stroke Fade Time", "划线停留时间"))
+                            .font(.callout.weight(.medium))
+                        modernSlider(
+                            label: L10n.t("Stroke Fade Time", "划线停留时间"),
+                            value: binding(\.laserStrokeDuration),
+                            range: 0.2...3.0,
+                            lower: "0.2s",
+                            upper: "3.0s",
+                            readout: String(format: "%.2f s", viewModel.settings.laserStrokeDuration)
+                        )
+                    }
+                }
+                .padding(.vertical, 6)
+                .disabled(!viewModel.settings.showLaserPointer)
                 Divider().padding(.vertical, 6)
                 ModernRow(title: L10n.t("Show Live Keyboard Shortcuts", "显示实时键盘快捷键"),
                           subtitle: L10n.t("Display shortcut combinations while you use them.", "在使用快捷键时实时显示按键组合。")) {
