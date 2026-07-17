@@ -49,6 +49,7 @@ struct ClickProfileSettings: Codable, Equatable {
     var showDrag: Bool
     var showLaserPointer: Bool
     var laserCursorVisible: Bool
+    var showArrowMode: Bool
     var showLiveKeyboardShortcuts: Bool
     var liveShortcutPosition: LiveShortcutPosition
     var liveShortcutSize: LiveShortcutSize
@@ -90,6 +91,7 @@ struct ClickProfileSettings: Codable, Equatable {
         self.showDrag = settings.showDrag
         self.showLaserPointer = settings.showLaserPointer
         self.laserCursorVisible = settings.laserCursorVisible
+        self.showArrowMode = settings.showArrowMode
         self.showLiveKeyboardShortcuts = settings.showLiveKeyboardShortcuts
         self.liveShortcutPosition = settings.liveShortcutPosition
         self.liveShortcutSize = settings.liveShortcutSize
@@ -132,6 +134,7 @@ struct ClickProfileSettings: Codable, Equatable {
         settings.showDrag = showDrag
         settings.showLaserPointer = showLaserPointer
         settings.laserCursorVisible = laserCursorVisible
+        settings.showArrowMode = showArrowMode
         settings.showLiveKeyboardShortcuts = showLiveKeyboardShortcuts
         settings.liveShortcutPosition = liveShortcutPosition
         settings.liveShortcutSize = liveShortcutSize
@@ -177,6 +180,7 @@ struct ClickProfileSettings: Codable, Equatable {
         showDrag = try container.decode(Bool.self, forKey: .showDrag)
         showLaserPointer = try container.decode(Bool.self, forKey: .showLaserPointer)
         laserCursorVisible = try container.decodeIfPresent(Bool.self, forKey: .laserCursorVisible) ?? true
+        showArrowMode = try container.decodeIfPresent(Bool.self, forKey: .showArrowMode) ?? false
         showLiveKeyboardShortcuts = try container.decode(Bool.self, forKey: .showLiveKeyboardShortcuts)
         liveShortcutPosition = try container.decode(LiveShortcutPosition.self, forKey: .liveShortcutPosition)
         liveShortcutSize = try container.decode(LiveShortcutSize.self, forKey: .liveShortcutSize)
@@ -210,6 +214,7 @@ struct ClickProfileSettings: Codable, Equatable {
         laserStrokeWidth = try container.decodeIfPresent(Double.self, forKey: .laserStrokeWidth) ?? 6.0
         laserStrokeDuration = try container.decodeIfPresent(Double.self, forKey: .laserStrokeDuration) ?? 0.9
     }
+
 }
 
 @MainActor

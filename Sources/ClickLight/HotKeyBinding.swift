@@ -6,6 +6,10 @@ struct HotKeyBinding: Equatable, Hashable, Sendable {
     let carbonModifiers: Int
 
     static let defaultToggleModifiers: Int = Int(controlKey | optionKey | cmdKey)
+    static let defaultScreenshotReleaseSuppression = HotKeyBinding(
+        keyCode: kVK_ANSI_4,
+        carbonModifiers: Int(cmdKey | shiftKey)
+    )
 
     var displayString: String {
         modifiersString + keyString
@@ -160,6 +164,8 @@ struct HotKeyBinding: Equatable, Hashable, Sendable {
 enum ClickShortcutAction: String, CaseIterable, Identifiable, Sendable {
     case toggleEnabled
     case toggleLaserPointer
+    case toggleArrowMode
+    case clearArrows
     case toggleShowPress
     case toggleShowRelease
     case toggleShowRightClick
@@ -176,6 +182,10 @@ enum ClickShortcutAction: String, CaseIterable, Identifiable, Sendable {
             return L10n.t("Toggle ClickLight", "开关 ClickLight")
         case .toggleLaserPointer:
             return L10n.t("Toggle Laser Pointer", "开关激光指针")
+        case .toggleArrowMode:
+            return L10n.t("Toggle Arrow Mode", "开关箭头模式")
+        case .clearArrows:
+            return L10n.t("Clear Arrows", "清除箭头")
         case .toggleShowPress:
             return L10n.t("Toggle Press", "开关按下高亮")
         case .toggleShowRelease:
@@ -199,6 +209,10 @@ enum ClickShortcutAction: String, CaseIterable, Identifiable, Sendable {
             return 1
         case .toggleLaserPointer:
             return 2
+        case .toggleArrowMode:
+            return 10
+        case .clearArrows:
+            return 11
         case .toggleShowPress:
             return 3
         case .toggleShowRelease:
@@ -220,7 +234,10 @@ enum ClickShortcutAction: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .toggleEnabled:
             return HotKeyBinding(keyCode: kVK_ANSI_L, carbonModifiers: HotKeyBinding.defaultToggleModifiers)
+        case .clearArrows:
+            return HotKeyBinding(keyCode: kVK_ANSI_C, carbonModifiers: HotKeyBinding.defaultToggleModifiers)
         case .toggleLaserPointer,
+            .toggleArrowMode,
             .toggleShowPress,
             .toggleShowRelease,
             .toggleShowRightClick,

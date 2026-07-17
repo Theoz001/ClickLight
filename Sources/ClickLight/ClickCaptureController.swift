@@ -4,7 +4,11 @@ protocol ClickEventCapturing: AnyObject {
     var statusLabel: String { get }
     var usesEventTap: Bool { get }
 
-    func start(mouseMovedEnabled: Bool, liveKeyboardShortcutsEnabled: Bool)
+    func start(
+        mouseMovedEnabled: Bool,
+        liveKeyboardShortcutsEnabled: Bool,
+        releaseSuppressionShortcutEnabled: Bool
+    )
     func stop()
 }
 
@@ -38,7 +42,8 @@ final class ClickCaptureController {
         guard settingsStore.settings.isEnabled else { return }
         eventTap.start(
             mouseMovedEnabled: mouseMovedEnabled,
-            liveKeyboardShortcutsEnabled: settingsStore.settings.showLiveKeyboardShortcuts
+            liveKeyboardShortcutsEnabled: settingsStore.settings.showLiveKeyboardShortcuts,
+            releaseSuppressionShortcutEnabled: settingsStore.settings.listensForReleaseSuppressionShortcut
         )
     }
 
@@ -46,7 +51,8 @@ final class ClickCaptureController {
         if settingsStore.settings.isEnabled {
             eventTap.start(
                 mouseMovedEnabled: mouseMovedEnabled,
-                liveKeyboardShortcutsEnabled: settingsStore.settings.showLiveKeyboardShortcuts
+                liveKeyboardShortcutsEnabled: settingsStore.settings.showLiveKeyboardShortcuts,
+                releaseSuppressionShortcutEnabled: settingsStore.settings.listensForReleaseSuppressionShortcut
             )
         } else {
             eventTap.stop()

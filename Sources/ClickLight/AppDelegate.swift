@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         onCheckForUpdates: { UpdateChecker.shared.checkForUpdates() },
         updatesAreConfigured: { UpdateChecker.shared.isConfigured },
         onOpenSettings: { [weak self] pane in self?.openSettings(selecting: pane) },
+        onClearArrows: { [weak self] in self?.overlayCoordinator.clearArrows() },
         onQuit: { NSApplication.shared.terminate(nil) },
         onMenuWillOpen: { [weak self] in
             self?.hotKeyManager.unregisterAll()
@@ -35,17 +36,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var captureEnabledState: Bool?
     private var mouseMovedEnabledState: Bool?
     private var liveKeyboardShortcutsEnabledState: Bool?
+    private var releaseSuppressionShortcutEnabledState: Bool?
+    private var suppressReleaseUntil: TimeInterval?
     private var hotKeyBindingsState: [ClickShortcutAction: HotKeyBinding] = [:]
     private var hotKeyRegistrationIssuesState: [ClickShortcutAction: String] = [:]
     private var activeShortcutRecorders = 0
+    private let releaseSuppressionTimeout: TimeInterval = 10
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureMainMenu()
         overlayCoordinator.start()
         permissions.requestAccessibilityIfNeeded()
+        if settingsStore.settings.showLiveKeyboardShortcuts || settingsStore.settings.listensForReleaseSuppressionShortcut {
+            permissions.requestInputMonitoringIfNeeded()
+        }
         captureEnabledState = settingsStore.settings.isEnabled
         mouseMovedEnabledState = Self.mouseMovedEnabled(settingsStore.settings)
         liveKeyboardShortcutsEnabledState = settingsStore.settings.showLiveKeyboardShortcuts
+        releaseSuppressionShortcutEnabledState = settingsStore.settings.listensForReleaseSuppressionShortcut
         captureController.startIfEnabled()
         statusController.start()
         configureHotKeysIfNeeded(with: settingsStore.settings, force: true)
@@ -125,17 +133,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settings.showLiveKeyboardShortcuts && liveKeyboardShortcutsEnabledState != true {
             permissions.requestInputMonitoringIfNeeded()
         }
+        if settings.listensForReleaseSuppressionShortcut && releaseSuppressionShortcutEnabledState != true {
+            permissions.requestInputMonitoringIfNeeded()
+        }
         overlayCoordinator.refreshSettings()
         configureHotKeysIfNeeded(with: settings)
         let isEnabled = settings.isEnabled
         let mouseMovedEnabled = Self.mouseMovedEnabled(settings)
         let liveKeyboardShortcutsEnabled = settings.showLiveKeyboardShortcuts
+        let releaseSuppressionShortcutEnabled = settings.listensForReleaseSuppressionShortcut
         guard captureEnabledState != isEnabled ||
             mouseMovedEnabledState != mouseMovedEnabled ||
-            liveKeyboardShortcutsEnabledState != liveKeyboardShortcutsEnabled else { return }
+            liveKeyboardShortcutsEnabledState != liveKeyboardShortcutsEnabled ||
+            releaseSuppressionShortcutEnabledState != releaseSuppressionShortcutEnabled else { return }
         captureEnabledState = isEnabled
         mouseMovedEnabledState = mouseMovedEnabled
         liveKeyboardShortcutsEnabledState = liveKeyboardShortcutsEnabled
+        releaseSuppressionShortcutEnabledState = releaseSuppressionShortcutEnabled
         captureController.refreshEnabledState()
     }
 
@@ -177,9 +191,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusController.dismissMenu()
         switch action {
         case .toggleEnabled:
-            settingsStore.update { $0.isEnabled.toggle() }
+            settingsStore.update {
+                $0.isEnabled.toggle()
+                if !$0.isEnabled {
+                    $0.showArrowMode = false
+                }
+            }
         case .toggleLaserPointer:
-            settingsStore.update { $0.showLaserPointer.toggle() }
+            settingsStore.update {
+                $0.showLaserPointer.toggle()
+                if $0.showLaserPointer {
+                    $0.showArrowMode = false
+                }
+            }
+        case .toggleArrowMode:
+            settingsStore.update {
+                $0.showArrowMode.toggle()
+                if $0.showArrowMode {
+                    $0.showLaserPointer = false
+                }
+            }
+        case .clearArrows:
+            overlayCoordinator.clearArrows()
         case .toggleShowPress:
             settingsStore.update { $0.showPress.toggle() }
         case .toggleShowRelease:
@@ -200,13 +233,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func clickEventDidArrive(_ notification: Notification) {
         guard let box = notification.object as? ClickEventBox else { return }
         guard settingsWindowController?.contains(box.event.location) != true else { return }
+        guard !shouldSuppressRelease(box.event) else { return }
         activityStore.record(box.event)
         overlayCoordinator.show(box.event)
     }
 
     @objc private func keyboardShortcutEventDidArrive(_ notification: Notification) {
         guard let box = notification.object as? KeyboardShortcutEventBox else { return }
+        if shouldArmReleaseSuppression(for: box.event) {
+            suppressReleaseUntil = ProcessInfo.processInfo.systemUptime + releaseSuppressionTimeout
+        }
         overlayCoordinator.show(box.event)
+    }
+
+    private func shouldArmReleaseSuppression(for event: KeyboardShortcutEvent) -> Bool {
+        let settings = settingsStore.settings
+        guard settings.suppressReleaseAfterShortcut else { return false }
+        return settings.releaseSuppressionHotKey == event.binding
+    }
+
+    private func shouldSuppressRelease(_ event: ClickEvent) -> Bool {
+        guard event.kind.isRelease, let suppressReleaseUntil else { return false }
+
+        defer {
+            self.suppressReleaseUntil = nil
+        }
+
+        return ProcessInfo.processInfo.systemUptime <= suppressReleaseUntil
     }
 
     private func configureMainMenu() {

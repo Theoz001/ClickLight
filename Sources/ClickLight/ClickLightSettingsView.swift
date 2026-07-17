@@ -249,7 +249,7 @@ struct ClickLightSettingsView: View {
                 }
             }
 
-            if viewModel.settings.showLiveKeyboardShortcuts {
+            if viewModel.settings.showLiveKeyboardShortcuts || viewModel.settings.listensForReleaseSuppressionShortcut {
                 SettingsCard {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 10) {
@@ -264,7 +264,7 @@ struct ClickLightSettingsView: View {
                                     .font(.callout.weight(.medium))
                                 Text(viewModel.inputMonitoringTrusted
                                      ? L10n.t("ClickLight can observe keyboard shortcuts across the system.", "ClickLight 可以观察全系统的键盘快捷键。")
-                                     : L10n.t("Grant Input Monitoring access so ClickLight can show keyboard shortcuts.", "授予输入监控权限，以便 ClickLight 显示键盘快捷键。"))
+                                     : L10n.t("Grant Input Monitoring access so ClickLight can observe keyboard shortcuts.", "授予输入监控权限，以便 ClickLight 观察键盘快捷键。"))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -520,7 +520,17 @@ struct ClickLightSettingsView: View {
             VStack(spacing: 0) {
                 ModernRow(title: L10n.t("Laser Pointer Mode", "激光指针模式"),
                           subtitle: L10n.t("Show a fading pointer and draw temporary strokes while dragging.", "显示渐隐的指针，并在拖拽时绘制临时笔迹。")) {
-                    Toggle("", isOn: binding(\.showLaserPointer))
+                    Toggle("", isOn: Binding(
+                        get: { viewModel.settings.showLaserPointer },
+                        set: { isEnabled in
+                            viewModel.update {
+                                $0.showLaserPointer = isEnabled
+                                if isEnabled {
+                                    $0.showArrowMode = false
+                                }
+                            }
+                        }
+                    ))
                         .toggleStyle(.switch)
                         .labelsHidden()
                         .accessibilityLabel(L10n.t("Laser Pointer Mode", "激光指针模式"))
@@ -563,6 +573,24 @@ struct ClickLightSettingsView: View {
                 }
                 .padding(.vertical, 6)
                 .disabled(!viewModel.settings.showLaserPointer)
+                Divider().padding(.vertical, 6)
+                ModernRow(title: L10n.t("Arrow Mode", "箭头模式"),
+                          subtitle: L10n.t("Drag from origin to arrow tip. Clear arrows when you're done.", "从起点拖到箭头尖端。用完后可清除箭头。")) {
+                    Toggle("", isOn: Binding(
+                        get: { viewModel.settings.showArrowMode },
+                        set: { isEnabled in
+                            viewModel.update {
+                                $0.showArrowMode = isEnabled
+                                if isEnabled {
+                                    $0.showLaserPointer = false
+                                }
+                            }
+                        }
+                    ))
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .accessibilityLabel(L10n.t("Arrow Mode", "箭头模式"))
+                }
                 Divider().padding(.vertical, 6)
                 ModernRow(title: L10n.t("Show Live Keyboard Shortcuts", "显示实时键盘快捷键"),
                           subtitle: L10n.t("Display shortcut combinations while you use them.", "在使用快捷键时实时显示按键组合。")) {
@@ -621,14 +649,14 @@ struct ClickLightSettingsView: View {
                     }
                     Divider().padding(.vertical, 6)
                 ModernRow(title: L10n.t("Show Drag", "显示拖拽"),
-                          subtitle: viewModel.settings.showLaserPointer
-                              ? L10n.t("Laser Pointer Mode replaces the normal drag trail.", "激光指针模式会替代普通拖拽轨迹。")
+                          subtitle: viewModel.settings.showLaserPointer || viewModel.settings.showArrowMode
+                              ? L10n.t("Laser Pointer Mode and Arrow Mode replace the normal drag trail.", "激光指针模式和箭头模式会替代普通拖拽轨迹。")
                               : L10n.t("Trail pointer movement while dragging.", "拖拽时显示指针轨迹。")) {
                     Toggle("", isOn: binding(\.showDrag))
                         .toggleStyle(.switch)
                         .labelsHidden()
                         .accessibilityLabel(L10n.t("Show Drag", "显示拖拽"))
-                        .disabled(viewModel.settings.showLaserPointer)
+                        .disabled(viewModel.settings.showLaserPointer || viewModel.settings.showArrowMode)
                 }
             }
         }
@@ -680,9 +708,42 @@ struct ClickLightSettingsView: View {
                 }
             }
 
+            SettingsCard(title: L10n.t("Screenshot Capture", "截图捕获")) {
+                VStack(spacing: 0) {
+                    ModernRow(title: L10n.t("Hide Release After Shortcut", "截图快捷键后隐藏抬起高亮"),
+                              subtitle: L10n.t("Skip one release highlight after the screenshot shortcut.", "在截图快捷键之后跳过一次抬起高亮。")) {
+                        Toggle("", isOn: binding(\.suppressReleaseAfterShortcut))
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                            .accessibilityLabel(L10n.t("Hide Release After Shortcut", "截图快捷键后隐藏抬起高亮"))
+                    }
+
+                    Divider().padding(.vertical, 4)
+
+                    ShortcutRecorderField(
+                        label: L10n.t("Screenshot Shortcut", "截图快捷键"),
+                        currentBinding: viewModel.settings.releaseSuppressionHotKey,
+                        defaultBinding: HotKeyBinding.defaultScreenshotReleaseSuppression,
+                        errorMessage: viewModel.releaseSuppressionShortcutError,
+                        onRecord: { binding in
+                            viewModel.updateReleaseSuppressionShortcutBinding(binding)
+                        },
+                        onReset: {
+                            viewModel.resetReleaseSuppressionShortcutBinding()
+                        },
+                        onClear: {
+                            viewModel.clearReleaseSuppressionShortcutBinding()
+                        }
+                    )
+                    .padding(.vertical, 4)
+                    .disabled(!viewModel.settings.suppressReleaseAfterShortcut)
+                    .opacity(viewModel.settings.suppressReleaseAfterShortcut ? 1 : 0.55)
+                }
+            }
+
             SettingsCard {
                 ModernRow(title: L10n.t("Reset All Shortcuts", "还原所有快捷键"),
-                          subtitle: L10n.t("Restore the ClickLight toggle shortcut and disable optional shortcuts.", "恢复 ClickLight 开关快捷键并停用可选快捷键。")) {
+                          subtitle: L10n.t("Restore default shortcuts and disable optional shortcuts.", "恢复默认快捷键并停用可选快捷键。")) {
                     Button(role: .destructive) {
                         showShortcutResetConfirmation = true
                     } label: {
@@ -703,7 +764,7 @@ struct ClickLightSettingsView: View {
             }
             Button(L10n.t("Cancel", "取消"), role: .cancel) {}
         } message: {
-            Text(L10n.t("This restores the ClickLight toggle shortcut and disables every optional shortcut.", "这会恢复 ClickLight 开关快捷键，并停用所有可选快捷键。"))
+            Text(L10n.t("This restores default shortcuts and disables every optional shortcut.", "这会恢复默认快捷键，并停用所有可选快捷键。"))
         }
     }
 
