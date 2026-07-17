@@ -1,6 +1,10 @@
 import AppKit
 
 final class ClickOverlayView: NSView {
+    /// Delay between the last visible animation frame and hiding the overlay
+    /// window (debounced against new content).
+    private static let windowHideDelay: TimeInterval = 0.4
+
     private var screenFrame: CGRect
     private var settings: ClickSettings
     private var pulses: [ClickPulse] = []
@@ -9,6 +13,7 @@ final class ClickOverlayView: NSView {
     private var completedLaserStrokes: [LaserStroke] = []
     private var liveShortcutLabel: LiveShortcutLabel?
     private var displayLink: Timer?
+    private var hideWindowWorkItem: DispatchWorkItem?
 
     init(screenFrame: CGRect, settings: ClickSettings) {
         self.screenFrame = screenFrame
@@ -67,6 +72,7 @@ final class ClickOverlayView: NSView {
 
         guard shouldShowPulse(for: event.kind) else { return }
 
+        prepareForNewContent()
         pulses.append(ClickPulse(
             kind: event.kind,
             point: localPoint,
@@ -84,6 +90,7 @@ final class ClickOverlayView: NSView {
 
     func show(shortcut: KeyboardShortcutEvent, settings: ClickSettings) {
         self.settings = settings
+        prepareForNewContent()
         liveShortcutLabel = LiveShortcutLabel(
             text: shortcut.displayString,
             point: CGPoint(
@@ -113,22 +120,60 @@ final class ClickOverlayView: NSView {
         }
         drawLiveShortcutLabel(at: now, in: context)
 
-        if pulses.isEmpty &&
-            laserCursor?.isExpired(at: now) != false &&
-            activeLaserStroke == nil &&
-            completedLaserStrokes.isEmpty &&
-            liveShortcutLabel == nil {
+        if isIdle(at: now) {
             stopDisplayLink()
+            scheduleWindowHide()
         }
     }
 
+    /// True when nothing on this view is animating or still visible: no
+    /// pulses, no laser dot, no strokes, no shortcut label.
+    private func isIdle(at now: CFTimeInterval) -> Bool {
+        pulses.isEmpty &&
+            laserCursor?.isExpired(at: now) != false &&
+            activeLaserStroke == nil &&
+            completedLaserStrokes.isEmpty &&
+            liveShortcutLabel == nil
+    }
+
+    /// Cancels any pending idle hide and makes sure the overlay window is
+    /// visible before new content is drawn. The Preview Pad hosts this view
+    /// inside the settings window, so only real overlay windows are touched.
+    private func prepareForNewContent() {
+        hideWindowWorkItem?.cancel()
+        hideWindowWorkItem = nil
+        if let overlayWindow = window as? ClickOverlayWindow {
+            overlayWindow.orderFrontRegardless()
+        }
+    }
+
+    /// Hides the overlay window shortly after the last animation frame. The
+    /// debounce avoids hide/show flicker during rapid consecutive clicks, and
+    /// the re-check at fire time guards against content that arrived without
+    /// cancelling the work item.
+    private func scheduleWindowHide() {
+        guard window is ClickOverlayWindow else { return }
+        hideWindowWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.hideWindowWorkItem = nil
+            guard let overlayWindow = self.window as? ClickOverlayWindow else { return }
+            guard self.isIdle(at: CACurrentMediaTime()) else { return }
+            overlayWindow.orderOut(nil)
+        }
+        hideWindowWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.windowHideDelay, execute: workItem)
+    }
+
     private func showLaserCursor(at point: CGPoint) {
+        prepareForNewContent()
         laserCursor = LaserCursor(point: point, updatedAt: CACurrentMediaTime())
         startDisplayLink()
         needsDisplay = true
     }
 
     private func appendLaserPoint(_ point: CGPoint) {
+        prepareForNewContent()
         let now = CACurrentMediaTime()
 
         if activeLaserStroke == nil {
@@ -150,6 +195,7 @@ final class ClickOverlayView: NSView {
 
     private func completeLaserStroke() {
         guard var stroke = activeLaserStroke else { return }
+        prepareForNewContent()
         stroke.completedAt = CACurrentMediaTime()
         completedLaserStrokes.append(stroke)
         activeLaserStroke = nil

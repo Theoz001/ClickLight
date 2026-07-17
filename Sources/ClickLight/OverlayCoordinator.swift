@@ -61,10 +61,12 @@ final class OverlayCoordinator {
 
     private func rebuildOverlays() {
         overlaysByScreenID.values.forEach { $0.close() }
+        // New windows stay ordered out (hidden) until the first event needs
+        // them; ClickOverlayWindow.show(...) calls orderFrontRegardless() and
+        // the view orders the window back out once it goes idle.
         overlaysByScreenID = Dictionary(
             uniqueKeysWithValues: NSScreen.screens.map { screen in
                 let window = ClickOverlayWindow(screen: screen, settings: settings)
-                window.orderFrontRegardless()
                 return (screen.identifier, window)
             }
         )
