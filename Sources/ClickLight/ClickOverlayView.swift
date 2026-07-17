@@ -68,7 +68,8 @@ final class ClickOverlayView: NSView {
             duration: duration(for: event.kind),
             baseSize: size(for: event.kind),
             intensity: settings.intensity,
-            color: color(for: event.kind)
+            color: color(for: event.kind),
+            style: settings.pulseStyle
         ))
 
         startDisplayLink()
@@ -256,6 +257,16 @@ final class ClickOverlayView: NSView {
     }
 
     private func draw(pulse: ClickPulse, at now: CFTimeInterval, in context: CGContext) {
+        // The pulse style is a layer on top of click kinds. Drag trails and
+        // laser strokes keep their own rendering regardless of style.
+        guard pulse.style != .classic, pulse.kind != .drag, pulse.kind != .move else {
+            drawClassic(pulse: pulse, at: now, in: context)
+            return
+        }
+        drawStylized(pulse: pulse, at: now, in: context)
+    }
+
+    private func drawClassic(pulse: ClickPulse, at now: CFTimeInterval, in context: CGContext) {
         let progress = pulse.progress(at: now)
         let eased = 1 - pow(1 - progress, 3)
         let fade = 1 - eased
@@ -381,6 +392,183 @@ final class ClickOverlayView: NSView {
         }
 
         context.restoreGState()
+    }
+
+    private func drawStylized(pulse: ClickPulse, at now: CFTimeInterval, in context: CGContext) {
+        let progress = pulse.progress(at: now)
+        let eased = 1 - pow(1 - progress, 3)
+        let fade = 1 - eased
+        let visualIntensity = max(0.15, min(1.35, pulse.intensity))
+        let alpha = clamp(fade * (0.18 + visualIntensity * 0.82))
+
+        context.saveGState()
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+
+        switch pulse.style {
+        case .classic:
+            break
+        case .ripple:
+            drawRipple(pulse: pulse, progress: progress, alpha: alpha, intensity: visualIntensity, in: context)
+        case .particles:
+            drawParticles(pulse: pulse, eased: eased, alpha: alpha, intensity: visualIntensity, in: context)
+        case .shockwave:
+            drawShockwave(pulse: pulse, progress: progress, alpha: alpha, intensity: visualIntensity, in: context)
+        case .spark:
+            drawSpark(pulse: pulse, progress: progress, eased: eased, alpha: alpha, intensity: visualIntensity, in: context)
+        }
+
+        context.restoreGState()
+    }
+
+    private func drawRipple(pulse: ClickPulse, progress: CGFloat, alpha: CGFloat, intensity: CGFloat, in context: CGContext) {
+        let delays: [CGFloat] = [0, 0.18, 0.36]
+        for (index, delay) in delays.enumerated() {
+            let local = max(0, min(1, (progress - delay) / (1 - delay)))
+            guard local > 0 else { continue }
+            let localEased = 1 - pow(1 - local, 3)
+            let localFade = 1 - localEased
+            let radius = pulse.baseSize * (0.14 + 0.88 * localEased)
+            if index == 0 {
+                drawGlowIfNeeded(
+                    context: context,
+                    point: pulse.point,
+                    radius: radius,
+                    color: pulse.color,
+                    alpha: localFade * intensity
+                )
+            }
+            drawRing(
+                context: context,
+                point: pulse.point,
+                radius: radius,
+                lineWidth: max(1.75, pulse.baseSize * (0.05 - 0.011 * CGFloat(index))),
+                color: pulse.color,
+                alpha: clamp(alpha * localFade)
+            )
+        }
+        let dotFade = 1 - min(1, progress * 2.2)
+        drawDot(
+            context: context,
+            point: pulse.point,
+            radius: pulse.baseSize * 0.075,
+            color: pulse.color,
+            alpha: clamp(alpha * dotFade * 0.8)
+        )
+    }
+
+    private func drawParticles(pulse: ClickPulse, eased: CGFloat, alpha: CGFloat, intensity: CGFloat, in context: CGContext) {
+        // Brief core flash before the dots take over.
+        let flashFade = 1 - min(1, eased * 2.4)
+        drawGlowIfNeeded(
+            context: context,
+            point: pulse.point,
+            radius: pulse.baseSize * 0.34,
+            color: pulse.color,
+            alpha: flashFade * intensity * 0.9
+        )
+        drawDot(
+            context: context,
+            point: pulse.point,
+            radius: pulse.baseSize * 0.08 * (1 - 0.4 * eased),
+            color: pulse.color,
+            alpha: clamp(alpha * flashFade)
+        )
+
+        for particle in pulse.particles {
+            let distance = pulse.baseSize * particle.distance * eased
+            let center = CGPoint(
+                x: pulse.point.x + cos(particle.angle) * distance,
+                y: pulse.point.y + sin(particle.angle) * distance
+            )
+            drawDot(
+                context: context,
+                point: center,
+                radius: max(1.2, pulse.baseSize * 0.05 * particle.size * (1 - 0.55 * eased)),
+                color: pulse.color,
+                alpha: clamp(alpha * particle.alpha)
+            )
+        }
+    }
+
+    private func drawShockwave(pulse: ClickPulse, progress: CGFloat, alpha: CGFloat, intensity: CGFloat, in context: CGContext) {
+        let easedFast = 1 - pow(1 - progress, 4)
+        let fade = 1 - easedFast
+        let radius = pulse.baseSize * (0.1 + 1.25 * easedFast)
+        let lineWidth = max(1.5, pulse.baseSize * (0.02 + 0.22 * fade))
+
+        // Screen-space flash at the click point during the first beat.
+        let flashProgress = min(1, progress / 0.28)
+        if flashProgress < 1 {
+            let flashAlpha = clamp((1 - flashProgress) * (0.2 + intensity * 0.35))
+            let flashRadius = pulse.baseSize * (0.42 - 0.12 * flashProgress)
+            context.setFillColor(pulse.color.withAlphaComponent(flashAlpha).cgColor)
+            context.fillEllipse(in: CGRect(
+                x: pulse.point.x - flashRadius,
+                y: pulse.point.y - flashRadius,
+                width: flashRadius * 2,
+                height: flashRadius * 2
+            ))
+        }
+
+        drawGlowIfNeeded(
+            context: context,
+            point: pulse.point,
+            radius: radius,
+            color: pulse.color,
+            alpha: fade * intensity
+        )
+        drawRing(
+            context: context,
+            point: pulse.point,
+            radius: radius,
+            lineWidth: lineWidth,
+            color: pulse.color,
+            alpha: clamp(alpha * (0.35 + 0.65 * fade))
+        )
+    }
+
+    private func drawSpark(pulse: ClickPulse, progress: CGFloat, eased: CGFloat, alpha: CGFloat, intensity: CGFloat, in context: CGContext) {
+        // Arms snap out fast, then dissolve while rotating slightly.
+        let grow = min(1, progress / 0.22)
+        let growEased = 1 - pow(1 - grow, 3)
+        let shrink = 1 - 0.45 * eased
+        let armLength = pulse.baseSize * (0.18 + 0.82 * growEased) * shrink
+        let armWidth = max(1.5, armLength * 0.16)
+        let rotation = eased * 0.55
+
+        drawGlowIfNeeded(
+            context: context,
+            point: pulse.point,
+            radius: pulse.baseSize * 0.3,
+            color: pulse.color,
+            alpha: (1 - eased) * intensity
+        )
+
+        context.saveGState()
+        context.translateBy(x: pulse.point.x, y: pulse.point.y)
+        context.rotate(by: rotation)
+        context.setFillColor(pulse.color.withAlphaComponent(clamp(alpha)).cgColor)
+        for arm in 0..<4 {
+            context.saveGState()
+            context.rotate(by: CGFloat(arm) * .pi / 2)
+            context.move(to: CGPoint(x: 0, y: armLength * 0.12))
+            context.addLine(to: CGPoint(x: armWidth / 2, y: armLength * 0.45))
+            context.addLine(to: CGPoint(x: 0, y: armLength))
+            context.addLine(to: CGPoint(x: -armWidth / 2, y: armLength * 0.45))
+            context.closePath()
+            context.fillPath()
+            context.restoreGState()
+        }
+        context.restoreGState()
+
+        drawDot(
+            context: context,
+            point: pulse.point,
+            radius: pulse.baseSize * 0.07 * (1 - 0.5 * eased),
+            color: pulse.color,
+            alpha: clamp(alpha * 0.9)
+        )
     }
 
     private func drawGlowIfNeeded(
@@ -565,6 +753,31 @@ private struct ClickPulse {
     let baseSize: CGFloat
     let intensity: CGFloat
     let color: NSColor
+    let style: ClickPulseStyle
+    let particles: [PulseParticle]
+
+    init(
+        kind: ClickKind,
+        point: CGPoint,
+        startTime: CFTimeInterval,
+        duration: TimeInterval,
+        baseSize: CGFloat,
+        intensity: CGFloat,
+        color: NSColor,
+        style: ClickPulseStyle
+    ) {
+        self.kind = kind
+        self.point = point
+        self.startTime = startTime
+        self.duration = duration
+        self.baseSize = baseSize
+        self.intensity = intensity
+        self.color = color
+        self.style = style
+        let seed = UInt64(truncatingIfNeeded: Int64(startTime * 1_000_000))
+            &+ UInt64(truncatingIfNeeded: Int64(point.x * 31 + point.y * 57))
+        self.particles = PulseParticle.makeBurst(seed: seed, count: 13)
+    }
 
     func progress(at time: CFTimeInterval) -> CGFloat {
         CGFloat(max(0, min(1, (time - startTime) / duration)))
@@ -572,6 +785,32 @@ private struct ClickPulse {
 
     func isExpired(at time: CFTimeInterval) -> Bool {
         progress(at: time) >= 1
+    }
+}
+
+private struct PulseParticle {
+    let angle: CGFloat
+    let distance: CGFloat
+    let size: CGFloat
+    let alpha: CGFloat
+
+    /// Deterministic pseudo-random burst generated once per pulse, so the
+    /// particle pattern is stable across frames (no per-frame RNG).
+    static func makeBurst(seed: UInt64, count: Int) -> [PulseParticle] {
+        var state = seed == 0 ? 0x9E3779B97F4A7C15 : seed
+        func nextUnit() -> CGFloat {
+            state = state &* 6364136223846793005 &+ 1442695040888963407
+            return CGFloat((state >> 32) & 0xFFFFFF) / CGFloat(0x1000000)
+        }
+        return (0..<count).map { index in
+            let angle = (CGFloat(index) / CGFloat(count)) * 2 * .pi + (nextUnit() - 0.5) * 0.9
+            return PulseParticle(
+                angle: angle,
+                distance: 0.55 + nextUnit() * 0.6,
+                size: 0.6 + nextUnit() * 0.8,
+                alpha: 0.55 + nextUnit() * 0.45
+            )
+        }
     }
 }
 

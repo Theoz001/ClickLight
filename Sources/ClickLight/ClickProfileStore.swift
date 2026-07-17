@@ -54,6 +54,7 @@ struct ClickProfileSettings: Codable, Equatable {
     var size: CGFloat
     var intensity: CGFloat
     var duration: TimeInterval
+    var pulseStyle: ClickPulseStyle
     var colorPreset: ClickColorPreset
     var customColorMode: CustomClickColorMode
     var customColorRed: CGFloat
@@ -91,6 +92,7 @@ struct ClickProfileSettings: Codable, Equatable {
         self.size = settings.size
         self.intensity = settings.intensity
         self.duration = settings.duration
+        self.pulseStyle = settings.pulseStyle
         self.colorPreset = settings.colorPreset
         self.customColorMode = settings.customColorMode
         self.customColorRed = settings.customColorRed
@@ -129,6 +131,7 @@ struct ClickProfileSettings: Codable, Equatable {
         settings.size = size
         settings.intensity = intensity
         settings.duration = duration
+        settings.pulseStyle = pulseStyle
         settings.colorPreset = colorPreset
         settings.customColorMode = customColorMode
         settings.customColorRed = customColorRed
@@ -152,6 +155,48 @@ struct ClickProfileSettings: Codable, Equatable {
         settings.laserInnerColorRed = laserInnerColorRed
         settings.laserInnerColorGreen = laserInnerColorGreen
         settings.laserInnerColorBlue = laserInnerColorBlue
+    }
+
+    // pulseStyle was added after profiles shipped; tolerate its absence so
+    // previously saved and exported profiles keep decoding.
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        showPress = try container.decode(Bool.self, forKey: .showPress)
+        showRelease = try container.decode(Bool.self, forKey: .showRelease)
+        showRightClick = try container.decode(Bool.self, forKey: .showRightClick)
+        showMiddleClick = try container.decode(Bool.self, forKey: .showMiddleClick)
+        showDrag = try container.decode(Bool.self, forKey: .showDrag)
+        showLaserPointer = try container.decode(Bool.self, forKey: .showLaserPointer)
+        showLiveKeyboardShortcuts = try container.decode(Bool.self, forKey: .showLiveKeyboardShortcuts)
+        liveShortcutPosition = try container.decode(LiveShortcutPosition.self, forKey: .liveShortcutPosition)
+        liveShortcutSize = try container.decode(LiveShortcutSize.self, forKey: .liveShortcutSize)
+        size = try container.decode(CGFloat.self, forKey: .size)
+        intensity = try container.decode(CGFloat.self, forKey: .intensity)
+        duration = try container.decode(TimeInterval.self, forKey: .duration)
+        pulseStyle = try container.decodeIfPresent(ClickPulseStyle.self, forKey: .pulseStyle) ?? .classic
+        colorPreset = try container.decode(ClickColorPreset.self, forKey: .colorPreset)
+        customColorMode = try container.decode(CustomClickColorMode.self, forKey: .customColorMode)
+        customColorRed = try container.decode(CGFloat.self, forKey: .customColorRed)
+        customColorGreen = try container.decode(CGFloat.self, forKey: .customColorGreen)
+        customColorBlue = try container.decode(CGFloat.self, forKey: .customColorBlue)
+        customLeftColorRed = try container.decode(CGFloat.self, forKey: .customLeftColorRed)
+        customLeftColorGreen = try container.decode(CGFloat.self, forKey: .customLeftColorGreen)
+        customLeftColorBlue = try container.decode(CGFloat.self, forKey: .customLeftColorBlue)
+        customRightColorRed = try container.decode(CGFloat.self, forKey: .customRightColorRed)
+        customRightColorGreen = try container.decode(CGFloat.self, forKey: .customRightColorGreen)
+        customRightColorBlue = try container.decode(CGFloat.self, forKey: .customRightColorBlue)
+        customMiddleColorRed = try container.decode(CGFloat.self, forKey: .customMiddleColorRed)
+        customMiddleColorGreen = try container.decode(CGFloat.self, forKey: .customMiddleColorGreen)
+        customMiddleColorBlue = try container.decode(CGFloat.self, forKey: .customMiddleColorBlue)
+        customDragColorRed = try container.decode(CGFloat.self, forKey: .customDragColorRed)
+        customDragColorGreen = try container.decode(CGFloat.self, forKey: .customDragColorGreen)
+        customDragColorBlue = try container.decode(CGFloat.self, forKey: .customDragColorBlue)
+        laserColorRed = try container.decode(CGFloat.self, forKey: .laserColorRed)
+        laserColorGreen = try container.decode(CGFloat.self, forKey: .laserColorGreen)
+        laserColorBlue = try container.decode(CGFloat.self, forKey: .laserColorBlue)
+        laserInnerColorRed = try container.decode(CGFloat.self, forKey: .laserInnerColorRed)
+        laserInnerColorGreen = try container.decode(CGFloat.self, forKey: .laserInnerColorGreen)
+        laserInnerColorBlue = try container.decode(CGFloat.self, forKey: .laserInnerColorBlue)
     }
 }
 
