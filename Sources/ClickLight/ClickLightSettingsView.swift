@@ -525,6 +525,15 @@ struct ClickLightSettingsView: View {
                         .accessibilityLabel(L10n.t("Laser Pointer Mode", "激光指针模式"))
                 }
                 Divider().padding(.vertical, 6)
+                ModernRow(title: L10n.t("Laser Dot Follows Pointer", "激光点跟随指针"),
+                          subtitle: L10n.t("Turn off to keep only drag strokes", "关闭后仅保留拖动划线")) {
+                    Toggle("", isOn: binding(\.laserCursorVisible))
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .accessibilityLabel(L10n.t("Laser Dot Follows Pointer", "激光点跟随指针"))
+                        .disabled(!viewModel.settings.showLaserPointer)
+                }
+                Divider().padding(.vertical, 6)
                 ModernRow(title: L10n.t("Show Live Keyboard Shortcuts", "显示实时键盘快捷键"),
                           subtitle: L10n.t("Display shortcut combinations while you use them.", "在使用快捷键时实时显示按键组合。")) {
                     Toggle("", isOn: binding(\.showLiveKeyboardShortcuts))

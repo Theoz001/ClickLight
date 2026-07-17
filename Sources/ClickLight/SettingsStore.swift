@@ -9,6 +9,7 @@ struct ClickSettings: Equatable {
     var showMiddleClick: Bool
     var showDrag: Bool
     var showLaserPointer: Bool
+    var laserCursorVisible: Bool
     var showLiveKeyboardShortcuts: Bool
     var liveShortcutPosition: LiveShortcutPosition
     var liveShortcutSize: LiveShortcutSize
@@ -137,6 +138,7 @@ struct ClickSettings: Equatable {
         showMiddleClick: true,
         showDrag: true,
         showLaserPointer: false,
+        laserCursorVisible: true,
         showLiveKeyboardShortcuts: false,
         liveShortcutPosition: .bottomCenter,
         liveShortcutSize: .medium,
@@ -481,6 +483,7 @@ final class SettingsStore {
         static let showMiddleClick = "showMiddleClick"
         static let showDrag = "showDrag"
         static let showLaserPointer = "showLaserPointer"
+        static let laserCursorVisible = "laserCursorVisible"
         static let showLiveKeyboardShortcuts = "showLiveKeyboardShortcuts"
         static let liveShortcutPosition = "liveShortcutPosition"
         static let liveShortcutSize = "liveShortcutSize"
@@ -565,6 +568,7 @@ final class SettingsStore {
                 showMiddleClick: defaults.bool(forKey: Key.showMiddleClick),
                 showDrag: defaults.bool(forKey: Key.showDrag),
                 showLaserPointer: defaults.bool(forKey: Key.showLaserPointer),
+                laserCursorVisible: defaults.bool(forKey: Key.laserCursorVisible),
                 showLiveKeyboardShortcuts: defaults.bool(forKey: Key.showLiveKeyboardShortcuts),
                 liveShortcutPosition: LiveShortcutPosition(rawValue: defaults.string(forKey: Key.liveShortcutPosition) ?? "") ?? .bottomCenter,
                 liveShortcutSize: LiveShortcutSize(rawValue: defaults.string(forKey: Key.liveShortcutSize) ?? "") ?? .medium,
@@ -658,6 +662,7 @@ final class SettingsStore {
             defaults.set(newValue.showMiddleClick, forKey: Key.showMiddleClick)
             defaults.set(newValue.showDrag, forKey: Key.showDrag)
             defaults.set(newValue.showLaserPointer, forKey: Key.showLaserPointer)
+            defaults.set(newValue.laserCursorVisible, forKey: Key.laserCursorVisible)
             defaults.set(newValue.showLiveKeyboardShortcuts, forKey: Key.showLiveKeyboardShortcuts)
             defaults.set(newValue.liveShortcutPosition.rawValue, forKey: Key.liveShortcutPosition)
             defaults.set(newValue.liveShortcutSize.rawValue, forKey: Key.liveShortcutSize)
@@ -740,6 +745,7 @@ final class SettingsStore {
             Key.showMiddleClick: defaults.showMiddleClick,
             Key.showDrag: defaults.showDrag,
             Key.showLaserPointer: defaults.showLaserPointer,
+            Key.laserCursorVisible: defaults.laserCursorVisible,
             Key.showLiveKeyboardShortcuts: defaults.showLiveKeyboardShortcuts,
             Key.liveShortcutPosition: defaults.liveShortcutPosition.rawValue,
             Key.liveShortcutSize: defaults.liveShortcutSize.rawValue,

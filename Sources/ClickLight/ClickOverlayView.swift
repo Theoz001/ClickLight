@@ -29,6 +29,10 @@ final class ClickOverlayView: NSView {
             activeLaserStroke = nil
             completedLaserStrokes = []
             needsDisplay = true
+        } else if !settings.laserCursorVisible {
+            // Strokes stay; only the following dot is suppressed.
+            laserCursor = nil
+            needsDisplay = true
         }
         if !settings.showLiveKeyboardShortcuts {
             liveShortcutLabel = nil
@@ -47,7 +51,9 @@ final class ClickOverlayView: NSView {
         if settings.showLaserPointer {
             switch event.kind {
             case .move:
-                showLaserCursor(at: localPoint)
+                if settings.laserCursorVisible {
+                    showLaserCursor(at: localPoint)
+                }
                 return
             case .drag:
                 appendLaserPoint(localPoint)
@@ -124,7 +130,6 @@ final class ClickOverlayView: NSView {
 
     private func appendLaserPoint(_ point: CGPoint) {
         let now = CACurrentMediaTime()
-        showLaserCursor(at: point)
 
         if activeLaserStroke == nil {
             activeLaserStroke = LaserStroke(points: [point], completedAt: nil)
@@ -136,7 +141,9 @@ final class ClickOverlayView: NSView {
             activeLaserStroke?.points.append(point)
         }
 
-        laserCursor = LaserCursor(point: point, updatedAt: now)
+        if settings.laserCursorVisible {
+            laserCursor = LaserCursor(point: point, updatedAt: now)
+        }
         startDisplayLink()
         needsDisplay = true
     }
@@ -161,7 +168,7 @@ final class ClickOverlayView: NSView {
             drawLaserStroke(activeLaserStroke, alpha: 0.95, in: context)
         }
 
-        guard let laserCursor, !laserCursor.isExpired(at: now) else { return }
+        guard let laserCursor, settings.laserCursorVisible, !laserCursor.isExpired(at: now) else { return }
         let alpha = laserCursor.alpha(at: now)
         let laserColor = settings.laserColor
         let middleColor = settings.laserMiddleColor

@@ -48,6 +48,7 @@ struct ClickProfileSettings: Codable, Equatable {
     var showMiddleClick: Bool
     var showDrag: Bool
     var showLaserPointer: Bool
+    var laserCursorVisible: Bool
     var showLiveKeyboardShortcuts: Bool
     var liveShortcutPosition: LiveShortcutPosition
     var liveShortcutSize: LiveShortcutSize
@@ -86,6 +87,7 @@ struct ClickProfileSettings: Codable, Equatable {
         self.showMiddleClick = settings.showMiddleClick
         self.showDrag = settings.showDrag
         self.showLaserPointer = settings.showLaserPointer
+        self.laserCursorVisible = settings.laserCursorVisible
         self.showLiveKeyboardShortcuts = settings.showLiveKeyboardShortcuts
         self.liveShortcutPosition = settings.liveShortcutPosition
         self.liveShortcutSize = settings.liveShortcutSize
@@ -125,6 +127,7 @@ struct ClickProfileSettings: Codable, Equatable {
         settings.showMiddleClick = showMiddleClick
         settings.showDrag = showDrag
         settings.showLaserPointer = showLaserPointer
+        settings.laserCursorVisible = laserCursorVisible
         settings.showLiveKeyboardShortcuts = showLiveKeyboardShortcuts
         settings.liveShortcutPosition = liveShortcutPosition
         settings.liveShortcutSize = liveShortcutSize
@@ -167,6 +170,7 @@ struct ClickProfileSettings: Codable, Equatable {
         showMiddleClick = try container.decode(Bool.self, forKey: .showMiddleClick)
         showDrag = try container.decode(Bool.self, forKey: .showDrag)
         showLaserPointer = try container.decode(Bool.self, forKey: .showLaserPointer)
+        laserCursorVisible = try container.decodeIfPresent(Bool.self, forKey: .laserCursorVisible) ?? true
         showLiveKeyboardShortcuts = try container.decode(Bool.self, forKey: .showLiveKeyboardShortcuts)
         liveShortcutPosition = try container.decode(LiveShortcutPosition.self, forKey: .liveShortcutPosition)
         liveShortcutSize = try container.decode(LiveShortcutSize.self, forKey: .liveShortcutSize)

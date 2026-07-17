@@ -33,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let permissions = PermissionController()
     private let launchAtLogin = LaunchAtLoginController()
     private var captureEnabledState: Bool?
-    private var laserPointerEnabledState: Bool?
+    private var mouseMovedEnabledState: Bool?
     private var liveKeyboardShortcutsEnabledState: Bool?
     private var hotKeyBindingsState: [ClickShortcutAction: HotKeyBinding] = [:]
     private var hotKeyRegistrationIssuesState: [ClickShortcutAction: String] = [:]
@@ -44,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         overlayCoordinator.start()
         permissions.requestAccessibilityIfNeeded()
         captureEnabledState = settingsStore.settings.isEnabled
-        laserPointerEnabledState = settingsStore.settings.showLaserPointer
+        mouseMovedEnabledState = Self.mouseMovedEnabled(settingsStore.settings)
         liveKeyboardShortcutsEnabledState = settingsStore.settings.showLiveKeyboardShortcuts
         captureController.startIfEnabled()
         statusController.start()
@@ -128,15 +128,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         overlayCoordinator.refreshSettings()
         configureHotKeysIfNeeded(with: settings)
         let isEnabled = settings.isEnabled
-        let laserPointerEnabled = settings.showLaserPointer
+        let mouseMovedEnabled = Self.mouseMovedEnabled(settings)
         let liveKeyboardShortcutsEnabled = settings.showLiveKeyboardShortcuts
         guard captureEnabledState != isEnabled ||
-            laserPointerEnabledState != laserPointerEnabled ||
+            mouseMovedEnabledState != mouseMovedEnabled ||
             liveKeyboardShortcutsEnabledState != liveKeyboardShortcutsEnabled else { return }
         captureEnabledState = isEnabled
-        laserPointerEnabledState = laserPointerEnabled
+        mouseMovedEnabledState = mouseMovedEnabled
         liveKeyboardShortcutsEnabledState = liveKeyboardShortcutsEnabled
         captureController.refreshEnabledState()
+    }
+
+    /// `mouseMoved` is only captured when the laser dot follows the pointer;
+    /// toggling the dot's visibility therefore restarts capture to widen or
+    /// narrow the event mask. Drag strokes keep working off `*MouseDragged`.
+    private static func mouseMovedEnabled(_ settings: ClickSettings) -> Bool {
+        settings.showLaserPointer && settings.laserCursorVisible
     }
 
     private func configureHotKeysIfNeeded(with settings: ClickSettings, force: Bool = false) {

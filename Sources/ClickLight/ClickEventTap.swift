@@ -7,7 +7,10 @@ final class ClickEventTap: ClickEventCapturing {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var globalMonitor: Any?
-    private var laserPointerEnabled = false
+    /// Whether `mouseMoved` is captured (only needed when the laser dot
+    /// follows the pointer; drag strokes rely on `*MouseDragged` events,
+    /// which are always in the mask).
+    private var mouseMovedEnabled = false
     private var liveKeyboardShortcutsEnabled = false
 
     var statusLabel: String {
@@ -27,11 +30,11 @@ final class ClickEventTap: ClickEventCapturing {
         eventTap != nil
     }
 
-    func start(laserPointerEnabled: Bool, liveKeyboardShortcutsEnabled: Bool) {
-        if self.laserPointerEnabled != laserPointerEnabled ||
+    func start(mouseMovedEnabled: Bool, liveKeyboardShortcutsEnabled: Bool) {
+        if self.mouseMovedEnabled != mouseMovedEnabled ||
             self.liveKeyboardShortcutsEnabled != liveKeyboardShortcutsEnabled {
             stop()
-            self.laserPointerEnabled = laserPointerEnabled
+            self.mouseMovedEnabled = mouseMovedEnabled
             self.liveKeyboardShortcutsEnabled = liveKeyboardShortcutsEnabled
         }
         startEventTapIfNeeded()
@@ -57,7 +60,7 @@ final class ClickEventTap: ClickEventCapturing {
             CGEventType.rightMouseDragged,
             CGEventType.otherMouseDragged
         ]
-        if laserPointerEnabled {
+        if mouseMovedEnabled {
             types.append(.mouseMoved)
         }
         if liveKeyboardShortcutsEnabled {
@@ -115,7 +118,7 @@ final class ClickEventTap: ClickEventCapturing {
             .rightMouseDragged,
             .otherMouseDragged
         ]
-        if laserPointerEnabled {
+        if mouseMovedEnabled {
             eventTypes.insert(.mouseMoved)
         }
         if liveKeyboardShortcutsEnabled {
